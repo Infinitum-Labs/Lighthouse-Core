@@ -50,11 +50,13 @@ class UsersTable extends StandardTable {
 }
 
 class WorkbenchesTable extends StandardTable {
-  final TableField<JSON> revisionTracker = TableField('revisionTracker');
+  final TableField<RevisionTracker> revisionTracker =
+      TableField('revisionTracker');
   final TableField<List<ObjectId>> projects = TableField('projects');
   final TableField<List<ContextRequirement>> contextRequirements =
       TableField('contextRequirements');
   final TableField<List<MetaTag>> metaTags = TableField('metaTags');
+  final int activeWorkbenchIndex = 0;
 
   WorkbenchesTable() : super('workbench') {
     fields.addAll({
@@ -65,15 +67,7 @@ class WorkbenchesTable extends StandardTable {
     });
   }
 
-  Future<void> markAsCreation(JSON json) async {
-    getIndexesWhere(TableQuery(Storage.workbench)
-      ..addFilter<ObjectId>(
-          'objectId', (ObjectId obId) => obId == Storage.workbenchId));
-  }
-
-  Future<void> markAsUpdate(JSON json) async {}
-
-  Future<void> markAsDeletion(JSON json) async {}
+  RevisionTracker get tracker => revisionTracker.getCell(activeWorkbenchIndex);
 }
 
 class GoalsTable extends StandardTable {

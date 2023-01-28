@@ -11,10 +11,11 @@ environment:
   sdk: '>=2.18.6 <3.0.0'
 
 dependencies:
-  testing _rig:
-    path: ".s/lib/testing_rig"
+  kryonic:
+    path: "./lib/testing_rig"
   flutter:
     sdk: flutter
+  http: ^0.13.5
 
 dev_dependencies:
   flutter_test:

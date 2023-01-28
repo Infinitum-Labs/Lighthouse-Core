@@ -1,11 +1,8 @@
 library core.data_handling.storage;
 
-import 'package:lighthouse_core/data_handling/data_handling.dart';
-
 import '../../authorization/authorization.dart';
 import '../../engines/context_engine/context_engine.dart';
 import '../../engines/prototype_engine/prototype_engine.dart';
-import '../transfer/transfer.dart';
 import 'package:lighthouse_core/utils/utils.dart';
 
 part './fixed_stack.dart';
@@ -28,14 +25,20 @@ class Storage {
   static late ObjectId userId;
   static late ObjectId workbenchId;
 
-  static void init(ObjectId usrId) {
+  static void init(ObjectId usrId, List<JSON> payload) {
     userId = usrId;
-    Synchroniser.init();
+    final JSON dump = payload.first;
+    final Iterable<String> validKeys =
+        dump.keys.where((String key) => tables.containsKey(key));
+    for (final String key in validKeys) {
+      if (tables.containsKey(key)) {
+        final List<JSON> data = dump[key] as List<JSON>;
+        tables[key]!.insertRecords(data, markAsCreation: false);
+      }
+    }
   }
 
-  static void deinit() {
-    Synchroniser.deinit();
-  }
+  static void deinit() {}
 
   static final Map<String, Table> tables = {
     'bin': bin,
@@ -50,6 +53,4 @@ class Storage {
     'issues': issues,
     'prototypes': prototypes,
   };
-
-  static Future<void> cascadeData(Map<String, List<JSON>> data) async {}
 }

@@ -8,7 +8,6 @@ class Synchroniser {
         Timer.periodic(const Duration(seconds: 20), (_) => synchronise());
     jwtRefreshTimer =
         Timer.periodic(const Duration(minutes: 20), (_) => refreshToken());
-    pullAllObjects();
   }
 
   static void deinit() {
@@ -16,17 +15,12 @@ class Synchroniser {
     jwtRefreshTimer.cancel();
   }
 
-  static Future<void> pullAllObjects() async {
-    final Response res = await HTTP.getAllObjects();
-    // Storage.cascadeData(res.payload.first as Map<String, List<JSON>>);
-  }
-
   static Future<void> refreshToken() async {}
 
   static final List<int> creationIndexes = [];
 
   static Future<void> synchronise() async {
-    // { 'users': ['id#1', 'id#2'] }
+    /* // { 'users': ['id#1', 'id#2'] }
     final Map<String, List<String>> updates = {};
     final Map<String, List<JSON>> creations = {};
     LoopUtils.iterateOver<Table>(Storage.tables.values, (Table table) async {
@@ -70,6 +64,6 @@ class Synchroniser {
       // Send request
       // Receive objects
       // Update isDirty
-    });
+    }); */
   }
 }

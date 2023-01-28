@@ -28,27 +28,29 @@ abstract class Table {
     bool markAsCreation = true,
   }) async {
     LoopUtils.iterateOver<JSON>(data, (JSON json) {
-      final Iterable<String> keys = json.keys;
+      final Iterable<String> properties =
+          json.keys.where((String key) => fields.keys.contains(key));
       int newIndex = -1;
-      LoopUtils.iterateOver<String>(keys, (String key) {
-        final TableField? tf = fields[key];
-        if (tf != null) {
-          if (newIndex == -1) newIndex = tf.cells.length;
-          final Object? value = json[key];
-          if (value is JSON) {
-            tf.cells.insert(newIndex, SubObject.fromJSON(value));
-          } else if (TriageState.values.stringify().contains(value as String)) {
-            tf.cells.insert(newIndex, TriageState.values.asEnum(value));
-          } else if (ProjectType.values.stringify().contains(value)) {
-            tf.cells.insert(newIndex, ProjectType.values.asEnum(value));
-          } else if (IssueSeverity.values.stringify().contains(value)) {
-            tf.cells.insert(newIndex, IssueSeverity.values.asEnum(value));
-          } else {
-            tf.cells.insert(newIndex, json[key]);
-          }
+      LoopUtils.iterateOver<String>(properties, (String property) {
+        final TableField tf = fields[property]!;
+        if (newIndex == -1) newIndex = tf.cells.length;
+        final Object? value = json[property];
+        if (value is JSON) {
+          tf.cells.insert(newIndex, SubObject.fromJSON(value));
+        } else if (TriageState.values.stringify().contains(value as String)) {
+          tf.cells.insert(newIndex, TriageState.values.asEnum(value));
+        } else if (ProjectType.values.stringify().contains(value)) {
+          tf.cells.insert(newIndex, ProjectType.values.asEnum(value));
+        } else if (IssueSeverity.values.stringify().contains(value)) {
+          tf.cells.insert(newIndex, IssueSeverity.values.asEnum(value));
+        } else {
+          tf.cells.insert(newIndex, json[property]);
         }
       });
-      if (markAsCreation) Storage.workbench.markAsCreation({name: newIndex});
+      if (markAsCreation) {
+        Storage.workbench.tracker
+            .markAsCreation(RTCreation(collection: name, data: json));
+      }
     });
   }
 
