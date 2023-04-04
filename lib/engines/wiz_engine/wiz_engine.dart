@@ -3,7 +3,7 @@ library core.engines.wiz_engine;
 import 'wiz_script/wiz_script.dart';
 import 'commands_client.dart' as commands;
 import '../context_engine/context_engine.dart';
-import 'package:lighthouse_core/data_handling/storage/storage.dart';
+import 'package:lighthouse_core/model/storage/storage.dart';
 import 'package:lighthouse_core/utils/utils.dart';
 
 part 'wizardry.dart';

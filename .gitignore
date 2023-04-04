@@ -42,3 +42,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# TypeScript
+*/node_modules/
+
+# Firebase
+firebase_configs.dart
+
+# Development
+.archives
