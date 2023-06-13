@@ -3,7 +3,7 @@ part of core.utils;
 typedef JSON = Map<String, Object?>;
 typedef ObjectId = String;
 
-class ExecutionEnvironment {
+/* class old_ExecutionEnvironment {
   final String processId = 'someProcId';
   final Map<String, Object?> inputRegistry;
   final OutputPipe outputPipe;
@@ -16,7 +16,7 @@ class ExecutionEnvironment {
     this.outputPipe = const OutputPipe(log: print, warn: print, err: print),
     // this.toastController,
   });
-}
+} */
 
 typedef LogFunction = void Function(dynamic);
 

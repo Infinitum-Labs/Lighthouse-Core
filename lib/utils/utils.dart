@@ -40,3 +40,32 @@ class LoopUtils {
 extension ListUtils<O> on List<O> {
   List<N> listOf<N>(N Function(O) converter) => map(converter).toList();
 }
+
+const List<String> alphabets = [
+  'a',
+  'b',
+  'c',
+  'd',
+  'e',
+  'f',
+  'g',
+  'h',
+  'i',
+  'j',
+  'k',
+  'l',
+  'm',
+  'n',
+  'o',
+  'p',
+  'q',
+  'r',
+  's',
+  't',
+  'u',
+  'v',
+  'w',
+  'x',
+  'y',
+  'z',
+];
