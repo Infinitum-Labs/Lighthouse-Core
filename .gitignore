@@ -51,3 +51,6 @@ firebase_configs.dart
 
 # Development
 .archives
+
+# Security
+lighthouse_core/assets/security

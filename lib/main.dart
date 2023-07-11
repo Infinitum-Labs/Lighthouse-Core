@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lighthouse_core/db/db.dart';
 import 'package:lighthouse_core/db/firebase_configs.dart';
-import 'package:firebase_core/firebase_core.dart';
 import './engines/wheelhouse_engine/wheelhouse_engine.dart';
 import './engines/wheelhouse_engine/wh_script/wh_script.dart';
 import './engines/wheelhouse_engine/core_commands/core_commands.dart';
@@ -8,9 +8,7 @@ import './utils/utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: webOptions,
-  );
+  await DB.init(webOptions);
   runApp(const App());
 }
 
@@ -36,21 +34,25 @@ class AppState extends State<App> {
               top: 50,
               bottom: 50,
             ),
-            child: Container(
-              color: Colors.black,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: App.logs,
+            child: SelectableRegion(
+              focusNode: FocusNode(),
+              selectionControls: emptyTextSelectionControls,
+              child: Container(
+                color: Colors.black,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: App.logs,
+                      ),
                     ),
-                  ),
-                  CommandEntryWidget(refreshFn: setState, key: widget.key),
-                ],
+                    CommandEntryWidget(refreshFn: setState, key: widget.key),
+                  ],
+                ),
               ),
             ),
           ),
@@ -145,10 +147,10 @@ class CommandEntryWidgetVC extends State<CommandEntryWidget> {
                 final WizResult wizResult =
                     wheelhouseEngine.handleCommand(wizCommand);
                 logFn(">  [${wizResult.code}]: ${wizResult.msg}");
-              } catch (e) {
+              } catch (e, st) {
                 logFn(e);
-                print('x');
                 print(e);
+                print(st);
               } finally {
                 editingController.clear();
                 focusNode.requestFocus();

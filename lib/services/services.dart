@@ -9,37 +9,32 @@ part 'keybine_service.dart';
 part 'prototype_service.dart';
 part 'wiz_service.dart';
 
-/* abstract class Service {
-  final List<int> policies;
+/// An [AccessKey] is issued by a trusted source, and follows a JWT model
+/// where the payload is part of the signature.
+/// The app loads its [AccessKey]s via asset files that are excluded from Git tracking
+/// and only provided to deployment platforms.
+class AccessKey {
+  final String jwtString;
 
-  Service({required this.policies});
-} */
-class Key {
-  late int value = hashCode;
+  AccessKey({
+    required this.jwtString,
+  });
 }
 
-abstract class Service {
-  final Key key;
-  final String? opt;
+class Permission {}
 
-  Service(this.key, {this.opt}) {
-    if (authenticate() == false) {
-      throw "Unauthenticated";
-    }
+abstract class LHService<K extends AccessKey> {
+  final K accessKey;
+  late final bool authenticated;
+
+  LHService({
+    required this.accessKey,
+  }) {
+    authenticated = authenticateKey(accessKey);
   }
 
-  bool authenticate() => key.value.isEven;
-}
-
-class Core {
-  void write(String s) => print(s);
-}
-
-class CoreService extends Service with Core {
-  CoreService(super.key, String opt) : super(opt: opt);
-}
-
-void main() {
-  final CoreService cs = CoreService(Key(), "null");
-  cs.write("Hello!");
+  bool authenticateKey(K accessKey);
+  void ensureAuthenticated() {
+    if (!authenticated) throw Exception("Not authenticated");
+  }
 }

@@ -2,6 +2,8 @@ library lhcore.engines.wiz_engine.core_commands;
 
 import '../wheelhouse_engine.dart';
 
+part './obj.dart';
+
 class UserTools extends WizCommandHandler {
   UserTools()
       : super(root: 'user', endpoints: {
