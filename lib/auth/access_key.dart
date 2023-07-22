@@ -14,14 +14,3 @@ class AccessKey {
   bool get isAuthentic => true;
   bool get isValid => true;
 }
-
-class Permission implements JSONObject {
-  final String permId;
-
-  const Permission({
-    required this.permId,
-  });
-
-  @override
-  Map toJson() => {'permId': permId};
-}
