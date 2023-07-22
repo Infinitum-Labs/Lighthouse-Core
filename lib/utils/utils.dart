@@ -1,5 +1,6 @@
 library core.utils;
 
+import 'dart:convert';
 import 'dart:math';
 
 part './types.dart';
@@ -37,8 +38,23 @@ class LoopUtils {
   }
 }
 
+abstract class JSONObject {
+  Map toJson();
+}
+
+class HttpUtils {
+  static final Codec<String, String> _codec = utf8.fuse(base64Url);
+
+  static String encodeToBase64Url(String src) => _codec.encode(src);
+  static String decodeFromBase64Url(String src) => _codec.decode(src);
+}
+
 extension ListUtils<O> on List<O> {
   List<N> listOf<N>(N Function(O) converter) => map(converter).toList();
+}
+
+extension DateUtils on DateTime {
+  int get secondsSinceEpoch => (millisecondsSinceEpoch / 1000).round();
 }
 
 const List<String> alphabets = [
