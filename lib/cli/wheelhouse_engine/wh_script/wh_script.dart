@@ -12,7 +12,7 @@ class WHParser {
     required this.source,
   }) : chars = source.split('');
 
-  WizCommand parse() {
+  WheelhouseCommand parse() {
     final Map<String, dynamic> localFlags = {};
     final Map<String, dynamic> globalFlags = {};
     final List<String> posArgsList = [];
@@ -51,7 +51,7 @@ class WHParser {
       }
       return shouldRemove;
     });
-    return WizCommand(
+    return WheelhouseCommand(
       root: root,
       endpoint: endpoint,
       positionalArgsList: posArgsList,

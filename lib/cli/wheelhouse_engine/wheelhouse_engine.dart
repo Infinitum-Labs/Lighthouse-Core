@@ -8,7 +8,7 @@ abstract class Registry<K, V> {
   Registry({required this.registry});
 }
 
-class WHCommandsRegistry extends Registry<String, WizCommandHandler> {
+class WHCommandsRegistry extends Registry<String, WHCommandHandler> {
   WHCommandsRegistry({required super.registry});
 }
 
@@ -21,28 +21,31 @@ class WheelhouseEngine {
     required this.outputPipe,
   });
 
-  WizResult handleCommand(WizCommand command) {
+  WheelhouseResult handleCommand(WheelhouseCommand command) {
     final ExecutionEnvironment environment =
         ExecutionEnvironment(outputPipe: outputPipe);
 
     if (commandsRegistry.registry.containsKey(command.root)) {
-      final Map<String, WizResult Function(WizCommand, ExecutionEnvironment)>
-          endpoints = commandsRegistry.registry[command.root]!.endpoints;
+      final Map<
+              String,
+              WheelhouseResult Function(
+                  WheelhouseCommand, ExecutionEnvironment)> endpoints =
+          commandsRegistry.registry[command.root]!.endpoints;
       if (endpoints.containsKey(command.endpoint)) {
         try {
           return endpoints[command.endpoint]!(command, environment);
-        } on WizResult catch (e) {
+        } on WheelhouseResult catch (e) {
           return e;
         }
       } else {
-        return WizResult.failure(
+        return WheelhouseResult.failure(
           wizCommand: command,
           code: 2,
           msg: "Command endpoint '${command.root}' not found",
         );
       }
     } else {
-      return WizResult.failure(
+      return WheelhouseResult.failure(
         wizCommand: command,
         code: 127,
         msg: "Command root '${command.root}' not found",
@@ -51,31 +54,31 @@ class WheelhouseEngine {
   }
 }
 
-class WizResult {
+class WheelhouseResult {
   final int code;
   final String msg;
-  final WizCommand wizCommand;
+  final WheelhouseCommand wizCommand;
 
-  const WizResult({
+  const WheelhouseResult({
     required this.wizCommand,
     required this.code,
     required this.msg,
   });
 
-  WizResult.success({
+  WheelhouseResult.success({
     required this.wizCommand,
     String? msg,
   })  : code = 0,
         msg = msg ?? "Command #${wizCommand.id} succeeded";
 
-  WizResult.failure({
+  WheelhouseResult.failure({
     required this.wizCommand,
     String? msg,
     this.code = 1,
   }) : msg = msg ?? "Command #${wizCommand.id} failed";
 }
 
-class WizCommand {
+class WheelhouseCommand {
   final String id;
   final String root;
   final String endpoint;
@@ -86,7 +89,7 @@ class WizCommand {
   final Map<String, dynamic> localFlags;
   final Map<String, dynamic> globalFlags;
 
-  WizCommand({
+  WheelhouseCommand({
     required this.root,
     required this.endpoint,
     this.positionalArgsList = const [],
@@ -99,12 +102,13 @@ class WizCommand {
   }
 }
 
-abstract class WizCommandHandler {
+abstract class WHCommandHandler {
   final String root;
-  final Map<String, WizResult Function(WizCommand, ExecutionEnvironment)>
+  final Map<String,
+          WheelhouseResult Function(WheelhouseCommand, ExecutionEnvironment)>
       endpoints;
 
-  WizCommandHandler({
+  WHCommandHandler({
     required this.root,
     required this.endpoints,
   });
@@ -119,12 +123,12 @@ class ExecutionEnvironment {
 }
 
 abstract class Args<RefType> {
-  final WizCommand wizCommand;
+  final WheelhouseCommand wizCommand;
 
   Args({required this.wizCommand});
 
-  WizResult argErr(RefType argReference) {
-    throw WizResult.failure(
+  WheelhouseResult argErr(RefType argReference) {
+    throw WheelhouseResult.failure(
       wizCommand: wizCommand,
       code: 2,
       msg: "Argument expected for reference '$argReference'",
@@ -138,7 +142,7 @@ abstract class Args<RefType> {
     try {
       result = accessArg<T>(argReference);
       return result;
-    } on WizResult catch (_) {
+    } on WheelhouseResult catch (_) {
       rethrow;
     }
   }

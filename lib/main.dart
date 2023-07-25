@@ -142,11 +142,11 @@ class CommandEntryWidgetVC extends State<CommandEntryWidget> {
             onSubmitted: (String value) {
               logFn(value, true);
               try {
-                final WizCommand wizCommand =
+                final WheelhouseCommand wheelhouseCommand =
                     WHParser(source: value.trim()).parse();
-                final WizResult wizResult =
-                    wheelhouseEngine.handleCommand(wizCommand);
-                logFn(">  [${wizResult.code}]: ${wizResult.msg}");
+                final WheelhouseResult wheelhouseResult =
+                    wheelhouseEngine.handleCommand(wheelhouseCommand);
+                logFn(">  [${wheelhouseResult.code}]: ${wheelhouseResult.msg}");
               } catch (e, st) {
                 logFn(e);
                 print(e);

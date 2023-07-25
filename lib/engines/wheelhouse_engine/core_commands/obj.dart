@@ -1,11 +1,10 @@
 part of lhcore.engines.wiz_engine.core_commands;
 
-class ObjectTools extends WizCommandHandler {
+class ObjectTools extends WHCommandHandler {
   ObjectTools()
       : super(root: 'obj', endpoints: {
-          'workbenches': (WizCommand cmd, ExecutionEnvironment env) {
-
-            return WizResult.failure(
+          'workbenches': (WheelhouseCommand cmd, ExecutionEnvironment env) {
+            return WheelhouseResult.failure(
               msg: '',
               wizCommand: cmd,
             );

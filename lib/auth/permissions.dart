@@ -20,4 +20,5 @@ enum PermissionId {
   db_read,
   db_write,
   db_delete,
+  wh_execute,
 }
