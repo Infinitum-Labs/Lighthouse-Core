@@ -3,6 +3,8 @@ library core.utils;
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:lighthouse_core/db/db.dart';
+
 part './types.dart';
 
 void emptyCallback() {}
@@ -53,6 +55,10 @@ extension ListUtils<O> on List<O> {
   List<N> listOf<N>(N Function(O) converter) => map(converter).toList();
 }
 
+extension StorableListUtils on List<Storable> {
+  List<Object?> toStorableList() => map((e) => e.toStorable()).toList();
+}
+
 extension DateUtils on DateTime {
   int get secondsSinceEpoch => (millisecondsSinceEpoch / 1000).round();
 }
@@ -85,3 +91,15 @@ const List<String> alphabets = [
   'y',
   'z',
 ];
+
+class EnumUtils {
+  static T enumFromString<T extends Enum>(
+    Iterable<T> enumValues,
+    String label,
+  ) {
+    return enumValues.firstWhere(
+      (T value) => value.name == label,
+      orElse: () => enumValues.first,
+    );
+  }
+}

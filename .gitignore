@@ -48,6 +48,8 @@ app.*.map.json
 
 # Firebase
 firebase_configs.dart
+lib/firebase/exports/firestore_export/
+
 
 # Development
 .archives

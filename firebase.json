@@ -9,7 +9,7 @@
     "singleProjectMode": true
   },
   "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
+    "rules": "./lib/firebase/firestore.rules",
+    "indexes": "./lib/firebase/firestore.indexes.json"
   }
 }
