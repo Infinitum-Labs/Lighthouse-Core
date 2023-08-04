@@ -27,10 +27,35 @@ class DB {
     switch (json['prefix']) {
       case 'wb':
         return Workbench.fromJson(json) as T;
+      case 'go':
+        return Goal.fromJson(json) as T;
+      case 'pj':
+        return Project.fromJson(json) as T;
+      case 'ep':
+        return Epic.fromJson(json) as T;
+      case 'sp':
+        return Sprint.fromJson(json) as T;
+      case 'tk':
+        return Task.fromJson(json) as T;
+      case 'ev':
+        return Event.fromJson(json) as T;
       default:
-        throw "";
+        throw DBException(
+          title: DBException.loadNativeFailed_PrefixNotRecog,
+          desc: "The prefix ",
+          dataSnapshot: LHDataSnapshot<JSON>(json),
+        );
     }
   }
+}
 
-  static JSON loadJsonFrom<T extends SchemaObject>(T obj) => obj.toJson();
+class DBException extends LHCoreException {
+  DBException({
+    required super.title,
+    required super.desc,
+    super.dataSnapshot,
+  }) : super(componentId: LighthouseCoreComponent.lhcore_db_db);
+
+  static const String loadNativeFailed_PrefixNotRecog =
+      "Failed to load native object from DB json";
 }

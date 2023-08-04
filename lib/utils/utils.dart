@@ -6,6 +6,7 @@ import 'dart:math';
 import 'package:lighthouse_core/db/db.dart';
 
 part './types.dart';
+part './exceptions.dart';
 
 void emptyCallback() {}
 
@@ -13,9 +14,9 @@ class ObjectID {
   static const String _chars = 'abcdefghijklmnopqrstuvwxyz1234567890';
   static final Random _rnd = Random();
 
-  static String generateAlphaNumString() =>
+  static String generateAlphaNumString([int length = 8]) =>
       String.fromCharCodes(Iterable.generate(
-          8, (_) => _chars.codeUnitAt(_rnd.nextInt(_chars.length))));
+          length, (_) => _chars.codeUnitAt(_rnd.nextInt(_chars.length))));
 
   static String generate(String objectPrefix, String userKey) =>
       '$objectPrefix-' +
@@ -102,4 +103,9 @@ class EnumUtils {
       orElse: () => enumValues.first,
     );
   }
+}
+
+extension TypeUtils on Object? {
+  bool get isNative =>
+      this is num || this is String || this is bool || this is List<Storable>;
 }
