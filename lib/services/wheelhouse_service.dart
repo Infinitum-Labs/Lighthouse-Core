@@ -12,15 +12,27 @@ class WheelhouseService extends LHService {
           outputPipe: outputPipe,
         );
 
-  WheelhouseResult executeCommandFromString(String command) {
-    requirePermissions(const []);
-    return executeCommandFromWHCommand(WHParser(source: command).parse());
+  Future<WheelhouseResult> executeCommandFromString(String command) async {
+    requirePermissions(const {});
+    return await executeCommandFromWHCommand(WHParser(source: command).parse());
   }
 
-  WheelhouseResult executeCommandFromWHCommand(WheelhouseCommand command) {
-    requirePermissions(const [
-      Permission(permId: PermissionId.wh_execute),
-    ]);
-    return wheelhouseEngine.handleCommand(command);
+  Future<WheelhouseResult> executeCommandFromWHCommand(
+      WheelhouseCommand command) async {
+    try {
+      requirePermissions(const {
+        Permission(permId: PermissionId.wh_execute),
+      });
+      return await wheelhouseEngine.handleCommand(command);
+    } catch (e) {
+      if (e is InsufficientPermsException) {
+        return WheelhouseResult.failure_insufficientPerms(
+          wizCommand: command,
+          permsNeeded: e.missingPerms,
+        );
+      } else {
+        rethrow;
+      }
+    }
   }
 }
