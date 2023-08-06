@@ -105,13 +105,13 @@ class Workbench extends SchemaObject {
 
   Workbench.fromJson(JSON json)
       : userName = json['userName'] as String,
-        projects = json['projects'] as List<String>,
-        goals = json['goals'] as List<String>,
-        tasks = json['tasks'] as List<String>,
-        epics = json['epics'] as List<String>,
-        sprints = json['sprints'] as List<String>,
-        events = json['events'] as List<String>,
-        bin = json['bin'] as List<String>,
+        projects = (json['projects'] as List).cast<String>(),
+        goals = (json['goals'] as List).cast<String>(),
+        tasks = (json['tasks'] as List).cast<String>(),
+        epics = (json['epics'] as List).cast<String>(),
+        sprints = (json['sprints'] as List).cast<String>(),
+        events = (json['events'] as List).cast<String>(),
+        bin = (json['bin'] as List).cast<String>(),
         super.fromJson(json);
 
   @override
@@ -162,8 +162,8 @@ class Project extends SchemaObject {
   }) : super(prefix: 'pj');
 
   Project.fromJson(JSON json)
-      : goals = json['goals'] as List<String>,
-        epics = json['epics'] as List<String>,
+      : goals = (json['goals'] as List).cast<String>(),
+        epics = (json['epics'] as List).cast<String>(),
         super.fromJson(json);
 
   @override
@@ -187,7 +187,7 @@ class Epic extends SchemaObject {
   }) : super(prefix: 'ep');
 
   Epic.fromJson(JSON json)
-      : tasks = json['tasks'] as List<String>,
+      : tasks = (json['tasks'] as List).cast<String>(),
         project = json['project'] as String,
         super.fromJson(json);
 
@@ -216,7 +216,7 @@ class Sprint extends SchemaObject {
   }) : super(prefix: 'sp');
 
   Sprint.fromJson(JSON json)
-      : tasks = json['tasks'] as List<String>,
+      : tasks = (json['tasks'] as List).cast<String>(),
         status = SprintStatus.fromStorable(json['status'] as String),
         start = DateTimeRep.fromStorable(json['start'] as int),
         end = DateTimeRep.fromStorable(json['end'] as int),
@@ -264,7 +264,8 @@ class Task extends SchemaObject {
 
   Task.fromJson(JSON json)
       : description = json['description'] as String,
-        dependencies = (json['description'] as List<String>).listOf<Dependency>(
+        dependencies =
+            ((json['description'] as List).cast<String>()).listOf<Dependency>(
           (String label) => Dependency.fromStorable(label),
         ),
         status = TaskStatus.fromStorable(json['status'] as String),
@@ -272,7 +273,8 @@ class Task extends SchemaObject {
         assigned = DateTimeRep.fromStorable(json['assigned'] as int),
         duration = DurationRep.fromStorable(json['duration'] as int),
         load = json['load'] as double,
-        contexts = (json['contexts'] as List<String>).listOf<ContextLabel>(
+        contexts =
+            ((json['contexts'] as List).cast<String>()).listOf<ContextLabel>(
           (String label) => ContextLabel(label),
         ),
         epic = json['epic'] as String,
