@@ -3,6 +3,7 @@ library core.utils;
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:lighthouse_core/auth/auth.dart';
 import 'package:lighthouse_core/db/db.dart';
 
 part './types.dart';

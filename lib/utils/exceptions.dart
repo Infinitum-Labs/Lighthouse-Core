@@ -58,3 +58,8 @@ class LHDataSnapshot<T> extends Storable {
     }
   }
 }
+
+class InsufficientPermsException {
+  final Set<Permission> missingPerms;
+  const InsufficientPermsException(this.missingPerms);
+}

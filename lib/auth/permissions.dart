@@ -14,11 +14,15 @@ class Permission implements JSONObject {
     // do a switch-case
     return null;
   }
+
+  @override
+  String toString() => "Permission<${permId.name}>";
 }
 
 enum PermissionId {
   db_read,
   db_write,
   db_delete,
+  db_access_workbenches,
   wh_execute,
 }

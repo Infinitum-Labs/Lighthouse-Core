@@ -1,5 +1,7 @@
 library lhcore.engines.wiz_engine;
 
+import 'package:lighthouse_core/auth/auth.dart';
+
 import '../../utils/utils.dart';
 
 abstract class Registry<K, V> {
@@ -21,19 +23,19 @@ class WheelhouseEngine {
     required this.outputPipe,
   });
 
-  WheelhouseResult handleCommand(WheelhouseCommand command) {
+  Future<WheelhouseResult> handleCommand(WheelhouseCommand command) async {
     final ExecutionEnvironment environment =
         ExecutionEnvironment(outputPipe: outputPipe);
 
     if (commandsRegistry.registry.containsKey(command.root)) {
       final Map<
               String,
-              WheelhouseResult Function(
+              Future<WheelhouseResult> Function(
                   WheelhouseCommand, ExecutionEnvironment)> endpoints =
           commandsRegistry.registry[command.root]!.endpoints;
       if (endpoints.containsKey(command.endpoint)) {
         try {
-          return endpoints[command.endpoint]!(command, environment);
+          return await endpoints[command.endpoint]!(command, environment);
         } on WheelhouseResult catch (e) {
           return e;
         }
@@ -41,7 +43,7 @@ class WheelhouseEngine {
         return WheelhouseResult.failure(
           wizCommand: command,
           code: 2,
-          msg: "Command endpoint '${command.root}' not found",
+          msg: "Command endpoint '${command.endpoint}' not found",
         );
       }
     } else {
@@ -76,6 +78,14 @@ class WheelhouseResult {
     String? msg,
     this.code = 1,
   }) : msg = msg ?? "Command #${wizCommand.id} failed";
+
+  WheelhouseResult.failure_insufficientPerms({
+    required this.wizCommand,
+    String? msg,
+    this.code = 2,
+    required Set<Permission> permsNeeded,
+  }) : msg = msg ??
+            "Command #${wizCommand.id} failed because the following permissions are needed:\n${permsNeeded.join('\n')}";
 }
 
 class WheelhouseCommand {
@@ -96,7 +106,7 @@ class WheelhouseCommand {
     this.namedArgsMap = const {},
     this.localFlags = const {},
     this.globalFlags = const {},
-  }) : id = ObjectID.generate('wcmd', 'userKey') {
+  }) : id = ObjectID.generate('whcmd', 'userKey') {
     posArgs = PosArgs(wizCommand: this, args: positionalArgsList);
     namedArgs = NamedArgs(wizCommand: this, args: namedArgsMap);
   }
@@ -114,13 +124,15 @@ class WheelhouseCommand {
 }
 
 abstract class WHCommandHandler {
-  final String root;
-  final Map<String,
-          WheelhouseResult Function(WheelhouseCommand, ExecutionEnvironment)>
-      endpoints;
+  /// Shown during logs to identify source
+  final String handlerId;
+  final Map<
+      String,
+      Future<WheelhouseResult> Function(
+          WheelhouseCommand cmd, ExecutionEnvironment env)> endpoints;
 
   WHCommandHandler({
-    required this.root,
+    required this.handlerId,
     required this.endpoints,
   });
 }

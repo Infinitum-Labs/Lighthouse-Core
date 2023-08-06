@@ -3,13 +3,11 @@ part of core.engines.prototype_engine;
 class Prototype {
   final String name;
   final String objectId;
-  final List<Role> roles;
   final List<Component> actions;
 
   Prototype({
     required this.name,
     required this.objectId,
-    required this.roles,
     this.actions = const [],
   });
 
@@ -31,7 +29,6 @@ class Prototype {
     return {
       'name': name,
       'objectId': objectId,
-      'roles': roles,
       'actions': actions,
     };
   }

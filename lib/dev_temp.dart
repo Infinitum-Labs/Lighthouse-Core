@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lighthouse_core/main.dart';
+import 'package:lighthouse_core/services/services.dart';
 import './engines/wheelhouse_engine/wheelhouse_engine.dart';
 import './engines/wheelhouse_engine/wh_script/wh_script.dart';
 import './engines/wheelhouse_engine/core_commands/core_commands.dart';
@@ -92,15 +94,18 @@ class CommandEntryWidget extends StatefulWidget {
 class CommandEntryWidgetVC extends State<CommandEntryWidget> {
   final TextEditingController editingController = TextEditingController();
   final FocusNode focusNode = FocusNode();
-  late WheelhouseEngine wheelhouseEngine = WheelhouseEngine(
+  late final WheelhouseService wheelhouseService = WheelhouseService(
     commandsRegistry: WHCommandsRegistry(registry: {
       'user': UserTools(),
+      'dev': DevCmd(),
+      'obj': ObjectTools(),
     }),
     outputPipe: OutputPipe(
       log: logFn,
       warn: logFn,
       err: logFn,
     ),
+    accessKey: superAccessKey,
   );
 
   logFn(dynamic logData, [bool isCommand = false]) {
@@ -132,13 +137,15 @@ class CommandEntryWidgetVC extends State<CommandEntryWidget> {
             decoration: const InputDecoration(
               focusedBorder: InputBorder.none,
             ),
-            onSubmitted: (String value) {
-              logFn(value, true);
+            onSubmitted: (String value) async {
+              logFn(value.trim(), true);
               try {
-                final WheelhouseCommand wheelhouseCommand =
-                    WHParser(source: value.trim()).parse();
                 final WheelhouseResult wheelhouseResult =
-                    wheelhouseEngine.handleCommand(wheelhouseCommand);
+                    await wheelhouseService.executeCommandFromWHCommand(
+                        WHParser(source: value.trim()).parse());
+                // Doesnt work:
+                // .executeCommandFromString(value.trim());
+
                 logFn(">  [${wheelhouseResult.code}]: ${wheelhouseResult.msg}");
               } catch (e, st) {
                 logFn(e);

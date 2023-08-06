@@ -1,4 +1,4 @@
-library lhcore.engines.wiz_engine.wiz_script_engine;
+library lhcore.engines.wh_engine.wh_script;
 
 import '../../../../utils/utils.dart';
 import '../wheelhouse_engine.dart';
