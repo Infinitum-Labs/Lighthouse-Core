@@ -42,7 +42,7 @@ class DB {
       default:
         throw DBException(
           title: DBException.loadNativeFailed_PrefixNotRecog,
-          desc: "The prefix ",
+          desc: "The prefix ${json['prefix']} was not recognised",
           dataSnapshot: LHDataSnapshot<JSON>(json),
         );
     }

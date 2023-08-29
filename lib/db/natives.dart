@@ -101,6 +101,7 @@ class Workbench extends SchemaObject {
     required this.events,
     required this.bin,
     required super.userKey,
+    required super.title,
   }) : super(prefix: 'wb');
 
   Workbench.fromJson(JSON json)
@@ -136,6 +137,7 @@ class Goal extends SchemaObject {
   Goal({
     required this.value,
     required super.userKey,
+    required super.title,
   }) : super(prefix: 'go');
 
   Goal.fromJson(JSON json)
@@ -159,6 +161,7 @@ class Project extends SchemaObject {
     required this.goals,
     required this.epics,
     required super.userKey,
+    required super.title,
   }) : super(prefix: 'pj');
 
   Project.fromJson(JSON json)
@@ -184,6 +187,7 @@ class Epic extends SchemaObject {
     required this.tasks,
     required this.project,
     required super.userKey,
+    required super.title,
   }) : super(prefix: 'ep');
 
   Epic.fromJson(JSON json)
@@ -213,6 +217,7 @@ class Sprint extends SchemaObject {
     required this.start,
     required this.end,
     required super.userKey,
+    required super.title,
   }) : super(prefix: 'sp');
 
   Sprint.fromJson(JSON json)
@@ -260,6 +265,7 @@ class Task extends SchemaObject {
     required this.sprint,
     required this.project,
     required super.userKey,
+    required super.title,
   }) : super(prefix: 'tk');
 
   Task.fromJson(JSON json)
@@ -313,6 +319,7 @@ class Event extends SchemaObject {
     required this.start,
     required this.duration,
     required super.userKey,
+    required super.title,
   }) : super(prefix: 'ev');
 
   Event.fromJson(JSON json)

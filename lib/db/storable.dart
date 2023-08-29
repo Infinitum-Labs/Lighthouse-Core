@@ -1,6 +1,5 @@
 part of lh.core.db;
 
-
 abstract class Storable {
   const Storable();
 
@@ -17,16 +16,19 @@ abstract class SingleElement<T> extends Storable {
 }
 
 abstract class SchemaObject extends Storable {
+  final String title;
   final String prefix;
   final String objectId;
 
   SchemaObject({
+    required this.title,
     required String userKey,
     required this.prefix,
   }) : objectId = ObjectID.generate(prefix, userKey);
 
   SchemaObject.fromJson(JSON json)
-      : prefix = json['prefix'] as String,
+      : title = json['title'] as String,
+        prefix = json['prefix'] as String,
         objectId = json['objectId'] as String;
 
   @override
@@ -37,6 +39,7 @@ abstract class SchemaObject extends Storable {
     return {
       'prefix': prefix,
       'objectId': objectId,
+      'title': title,
     };
   }
 }
