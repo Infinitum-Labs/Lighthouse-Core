@@ -2,52 +2,33 @@ part of lh.core.db;
 
 const int dtConvConst = 60000;
 
-enum SprintStatusLabel {
-  inbox,
-}
+enum SprintStatus implements Storable {
+  inbox;
 
-class SprintStatus extends SingleElement<String> {
-  final SprintStatusLabel statusLabel;
-  const SprintStatus(this.statusLabel);
-
-  static SprintStatus fromStorable(String storable) => SprintStatus(
-      EnumUtils.enumFromString(SprintStatusLabel.values, storable));
+  static SprintStatus fromString(String label) =>
+      EnumUtils.enumFromString(values, label);
 
   @override
-  String convert() => statusLabel.name;
+  String toStorable() => name;
 }
 
-enum DependencyLabel {
+enum Dependency implements Storable {
   isBlocked,
-  isBlocking,
-}
+  isBlocking;
 
-class Dependency extends SingleElement<String> {
-  final DependencyLabel dependencyLabel;
-
-  const Dependency(this.dependencyLabel);
-
-  static Dependency fromStorable(String storable) =>
-      Dependency(EnumUtils.enumFromString(DependencyLabel.values, storable));
-
+  static Dependency fromString(String label) =>
+      EnumUtils.enumFromString(values, label);
   @override
-  String convert() => dependencyLabel.name;
+  String toStorable() => name;
 }
 
-enum TaskStatusLabel {
-  inbox,
-}
+enum TaskStatus implements Storable {
+  inbox;
 
-class TaskStatus extends SingleElement<String> {
-  final TaskStatusLabel statusLabel;
-
-  const TaskStatus(this.statusLabel);
-
-  static TaskStatus fromStorable(String storable) =>
-      TaskStatus(EnumUtils.enumFromString(TaskStatusLabel.values, storable));
-
+  static TaskStatus fromString(String label) =>
+      EnumUtils.enumFromString(values, label);
   @override
-  String convert() => statusLabel.name;
+  String toStorable() => name;
 }
 
 class ContextLabel extends SingleElement<String> {
@@ -106,13 +87,16 @@ class Workbench extends SchemaObject {
 
   Workbench.fromJson(JSON json)
       : userName = json['userName'] as String,
-        projects = (json['projects'] as List).cast<String>(),
-        goals = (json['goals'] as List).cast<String>(),
-        tasks = (json['tasks'] as List).cast<String>(),
-        epics = (json['epics'] as List).cast<String>(),
-        sprints = (json['sprints'] as List).cast<String>(),
-        events = (json['events'] as List).cast<String>(),
-        bin = (json['bin'] as List).cast<String>(),
+        projects =
+            (json['projects'] as List).listOf<String>((val) => val.toString()),
+        goals = (json['goals'] as List).listOf<String>((val) => val.toString()),
+        tasks = (json['tasks'] as List).listOf<String>((val) => val.toString()),
+        epics = (json['epics'] as List).listOf<String>((val) => val.toString()),
+        sprints =
+            (json['sprints'] as List).listOf<String>((val) => val.toString()),
+        events =
+            (json['events'] as List).listOf<String>((val) => val.toString()),
+        bin = (json['bin'] as List).listOf<String>((val) => val.toString()),
         super.fromJson(json);
 
   @override
@@ -165,8 +149,8 @@ class Project extends SchemaObject {
   }) : super(prefix: 'pj');
 
   Project.fromJson(JSON json)
-      : goals = (json['goals'] as List).cast<String>(),
-        epics = (json['epics'] as List).cast<String>(),
+      : goals = (json['goals'] as List).listOf<String>((val) => val.toString()),
+        epics = (json['epics'] as List).listOf<String>((val) => val.toString()),
         super.fromJson(json);
 
   @override
@@ -191,7 +175,7 @@ class Epic extends SchemaObject {
   }) : super(prefix: 'ep');
 
   Epic.fromJson(JSON json)
-      : tasks = (json['tasks'] as List).cast<String>(),
+      : tasks = (json['tasks'] as List).listOf<String>((val) => val.toString()),
         project = json['project'] as String,
         super.fromJson(json);
 
@@ -221,8 +205,8 @@ class Sprint extends SchemaObject {
   }) : super(prefix: 'sp');
 
   Sprint.fromJson(JSON json)
-      : tasks = (json['tasks'] as List).cast<String>(),
-        status = SprintStatus.fromStorable(json['status'] as String),
+      : tasks = (json['tasks'] as List).listOf<String>((val) => val.toString()),
+        status = SprintStatus.fromString(json['status'] as String),
         start = DateTimeRep.fromStorable(json['start'] as int),
         end = DateTimeRep.fromStorable(json['end'] as int),
         super.fromJson(json);
@@ -270,19 +254,15 @@ class Task extends SchemaObject {
 
   Task.fromJson(JSON json)
       : description = json['description'] as String,
-        dependencies =
-            ((json['description'] as List).cast<String>()).listOf<Dependency>(
-          (String label) => Dependency.fromStorable(label),
-        ),
-        status = TaskStatus.fromStorable(json['status'] as String),
+        dependencies = (json['description'] as List)
+            .listOf<Dependency>((val) => Dependency.fromString(val)),
+        status = TaskStatus.fromString(json['status'] as String),
         due = DateTimeRep.fromStorable(json['due'] as int),
         assigned = DateTimeRep.fromStorable(json['assigned'] as int),
         duration = DurationRep.fromStorable(json['duration'] as int),
         load = json['load'] as double,
-        contexts =
-            ((json['contexts'] as List).cast<String>()).listOf<ContextLabel>(
-          (String label) => ContextLabel(label),
-        ),
+        contexts = (json['contexts'] as List)
+            .listOf<ContextLabel>((val) => ContextLabel(val)),
         epic = json['epic'] as String,
         sprint = json['sprint'] as String,
         project = json['project'] as String,
@@ -312,12 +292,14 @@ class Event extends SchemaObject {
   final String task;
   final DateTimeRep start;
   final DateTimeRep duration;
+  final RepeatRule? repeatRule;
 
   Event({
     required this.description,
     required this.task,
     required this.start,
     required this.duration,
+    this.repeatRule,
     required super.userKey,
     required super.title,
   }) : super(prefix: 'ev');
@@ -327,6 +309,7 @@ class Event extends SchemaObject {
         task = json['task'] as String,
         start = DateTimeRep.fromStorable(json['start'] as int),
         duration = DateTimeRep.fromStorable(json['duration'] as int),
+        repeatRule = RepeatRule.fromJson(json['repeatRule'] as JSON),
         super.fromJson(json);
 
   @override
@@ -337,6 +320,91 @@ class Event extends SchemaObject {
       'task': task,
       'start': start.toStorable(),
       'duration': duration.toStorable(),
+    };
+  }
+}
+
+enum RRFrequency implements Storable {
+  secondly,
+  minutely,
+  hourly,
+  daily,
+  weekly,
+  monthly,
+  yearly;
+
+  static RRFrequency fromString(String label) =>
+      EnumUtils.enumFromString(values, label);
+  @override
+  String toStorable() => name;
+}
+
+enum RRCountUnit implements Storable {
+  day,
+  week,
+  month,
+  year;
+
+  static RRCountUnit fromString(String label) =>
+      EnumUtils.enumFromString(values, label);
+  @override
+  String toStorable() => name;
+}
+
+enum RRWeekDays implements Storable {
+  monday,
+  tuesday,
+  wednesday,
+  thursday,
+  friday,
+  saturday,
+  sunday;
+
+  static RRWeekDays fromString(String label) =>
+      EnumUtils.enumFromString(values, label);
+  @override
+  String toStorable() => name;
+}
+
+/// Based on https://icalendar.org/iCalendar-RFC-5545/3-3-10-recurrence-rule.html
+class RepeatRule extends Storable {
+  final RRFrequency frequency;
+
+  /// Specify either [until] or [count] only
+  final DateTimeRep? until;
+  final int? count;
+
+  /// If [countUnit] is [RRCountUnit.week], then [weekDays] must be specified
+  final RRCountUnit? countUnit;
+  final List<RRWeekDays>? weekDays;
+
+  const RepeatRule({
+    required this.frequency,
+    this.until,
+    this.count,
+    this.countUnit,
+    this.weekDays,
+  });
+
+  RepeatRule.fromJson(JSON json)
+      : frequency = RRFrequency.fromString(json['freq'] as String),
+        until = DateTimeRep.fromStorable(json['until'] as int),
+        count = json['count'] as int,
+        countUnit = RRCountUnit.fromString(json['countUnit'] as String),
+        weekDays = (json['weekDays'] as List)
+            .listOf<RRWeekDays>((val) => RRWeekDays.fromString(val));
+
+  @override
+  Object? toStorable() {
+    return <String, dynamic>{
+      'freq': frequency.name,
+      if (until != null) 'until': until!.toStorable(),
+      if (count != null) 'count': count!,
+      if (countUnit != null) 'countUnit': countUnit!.name,
+      if (weekDays != null)
+        'weekDays': <String>[
+          for (RRWeekDays weekdays in weekDays!) weekdays.name
+        ],
     };
   }
 }

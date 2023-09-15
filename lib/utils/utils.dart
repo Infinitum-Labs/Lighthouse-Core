@@ -101,7 +101,6 @@ class EnumUtils {
   ) {
     return enumValues.firstWhere(
       (T value) => value.name == label,
-      orElse: () => enumValues.first,
     );
   }
 }
