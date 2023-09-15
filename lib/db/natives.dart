@@ -291,7 +291,7 @@ class Event extends SchemaObject {
   final String description;
   final String task;
   final DateTimeRep start;
-  final DateTimeRep duration;
+  final DurationRep duration;
   final RepeatRule? repeatRule;
 
   Event({
@@ -308,7 +308,7 @@ class Event extends SchemaObject {
       : description = json['description'] as String,
         task = json['task'] as String,
         start = DateTimeRep.fromStorable(json['start'] as int),
-        duration = DateTimeRep.fromStorable(json['duration'] as int),
+        duration = DurationRep.fromStorable(json['duration'] as int),
         repeatRule = RepeatRule.fromJson(json['repeatRule'] as JSON),
         super.fromJson(json);
 
