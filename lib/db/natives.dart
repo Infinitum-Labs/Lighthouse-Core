@@ -1,5 +1,6 @@
 part of lh.core.db;
 
+/// The number of milliseconds in a minute
 const int dtConvConst = 60000;
 
 enum SprintStatus implements Storable {
@@ -38,28 +39,6 @@ class ContextLabel extends SingleElement<String> {
 
   @override
   String convert() => contextLabel;
-}
-
-class DateTimeRep extends SingleElement<int> {
-  final DateTime dateTime;
-  const DateTimeRep(this.dateTime);
-
-  static DateTimeRep fromStorable(int storable) =>
-      DateTimeRep(DateTime.fromMillisecondsSinceEpoch(storable * dtConvConst));
-
-  @override
-  int convert() => (dateTime.millisecondsSinceEpoch / dtConvConst).round();
-}
-
-class DurationRep extends SingleElement<int> {
-  final Duration duration;
-  const DurationRep(this.duration);
-
-  static DurationRep fromStorable(int storable) =>
-      DurationRep(Duration(minutes: storable * dtConvConst));
-
-  @override
-  int convert() => duration.inMinutes;
 }
 
 class Workbench extends SchemaObject {
@@ -192,8 +171,8 @@ class Epic extends SchemaObject {
 class Sprint extends SchemaObject {
   final List<String> tasks;
   final SprintStatus status;
-  final DateTimeRep start;
-  final DateTimeRep end;
+  final DateTime start;
+  final DateTime end;
 
   Sprint({
     required this.tasks,
@@ -207,8 +186,8 @@ class Sprint extends SchemaObject {
   Sprint.fromJson(JSON json)
       : tasks = (json['tasks'] as List).listOf<String>((val) => val.toString()),
         status = SprintStatus.fromString(json['status'] as String),
-        start = DateTimeRep.fromStorable(json['start'] as int),
-        end = DateTimeRep.fromStorable(json['end'] as int),
+        start = DTStorable.fromStorable((json['start'] as int)),
+        end = DTStorable.fromStorable(json['end'] as int),
         super.fromJson(json);
 
   @override
@@ -227,9 +206,9 @@ class Task extends SchemaObject {
   final String description;
   final List<Dependency> dependencies;
   final TaskStatus status;
-  final DateTimeRep due;
-  final DateTimeRep assigned;
-  final DurationRep duration;
+  final DateTime due;
+  final DateTime assigned;
+  final Duration duration;
   final double load;
   final List<ContextLabel> contexts;
   final String epic;
@@ -257,9 +236,9 @@ class Task extends SchemaObject {
         dependencies = (json['description'] as List)
             .listOf<Dependency>((val) => Dependency.fromString(val)),
         status = TaskStatus.fromString(json['status'] as String),
-        due = DateTimeRep.fromStorable(json['due'] as int),
-        assigned = DateTimeRep.fromStorable(json['assigned'] as int),
-        duration = DurationRep.fromStorable(json['duration'] as int),
+        due = DTStorable.fromStorable(json['due'] as int),
+        assigned = DTStorable.fromStorable(json['assigned'] as int),
+        duration = DurationStorable.fromStorable(json['duration'] as int),
         load = json['load'] as double,
         contexts = (json['contexts'] as List)
             .listOf<ContextLabel>((val) => ContextLabel(val)),
@@ -290,8 +269,8 @@ class Task extends SchemaObject {
 class Event extends SchemaObject {
   final String description;
   final String task;
-  final DateTimeRep start;
-  final DurationRep duration;
+  final DateTime start;
+  final Duration duration;
   final RepeatRule? repeatRule;
 
   Event({
@@ -307,8 +286,8 @@ class Event extends SchemaObject {
   Event.fromJson(JSON json)
       : description = json['description'] as String,
         task = json['task'] as String,
-        start = DateTimeRep.fromStorable(json['start'] as int),
-        duration = DurationRep.fromStorable(json['duration'] as int),
+        start = DTStorable.fromStorable(json['start'] as int),
+        duration = DurationStorable.fromStorable(json['duration'] as int),
         repeatRule = RepeatRule.fromJson(json['repeatRule'] as JSON),
         super.fromJson(json);
 
@@ -371,7 +350,7 @@ class RepeatRule extends Storable {
   final RRFrequency frequency;
 
   /// Specify either [until] or [count] only
-  final DateTimeRep? until;
+  final DateTime? until;
   final int? count;
 
   /// If [countUnit] is [RRCountUnit.week], then [weekDays] must be specified
@@ -388,7 +367,7 @@ class RepeatRule extends Storable {
 
   RepeatRule.fromJson(JSON json)
       : frequency = RRFrequency.fromString(json['freq'] as String),
-        until = DateTimeRep.fromStorable(json['until'] as int),
+        until = DTStorable.fromStorable(json['until'] as int),
         count = json['count'] as int,
         countUnit = RRCountUnit.fromString(json['countUnit'] as String),
         weekDays = (json['weekDays'] as List)

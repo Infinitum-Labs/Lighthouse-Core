@@ -43,3 +43,18 @@ abstract class SchemaObject extends Storable {
     };
   }
 }
+
+extension DTStorable on DateTime {
+  static DateTime fromStorable(int minutes) =>
+      DateTime.fromMillisecondsSinceEpoch(minutes * dtConvConst);
+  Object? toStorable() => minutesSinceEpoch;
+}
+
+extension DurationStorable on Duration {
+  static Duration fromStorable(int minutes) => Duration(minutes: minutes);
+  Object? toStorable() => inMinutes;
+}
+
+extension StorableListUtils on List<Storable> {
+  List<Object?> toStorableList() => map((e) => e.toStorable()).toList();
+}

@@ -57,12 +57,11 @@ extension ListUtils<O> on List<O> {
   List<N> listOf<N>(N Function(O) converter) => map(converter).toList();
 }
 
-extension StorableListUtils on List<Storable> {
-  List<Object?> toStorableList() => map((e) => e.toStorable()).toList();
-}
+
 
 extension DateUtils on DateTime {
   int get secondsSinceEpoch => (millisecondsSinceEpoch / 1000).round();
+  int get minutesSinceEpoch => (millisecondsSinceEpoch / dtConvConst).round();
 }
 
 const List<String> alphabets = [
