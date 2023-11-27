@@ -8,7 +8,7 @@ enum LighthouseCoreComponent {
 
 abstract class LighthouseException extends Storable implements Exception {
   final String exceptionId = ObjectID.generateAlphaNumString(16);
-  final DateTimeRep timestamp = DateTimeRep(DateTime.now());
+  final DateTime timestamp = DateTime.now();
   final String title;
   final String desc;
   final LHDataSnapshot? dataSnapshot;

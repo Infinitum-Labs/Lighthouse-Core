@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lighthouse_core/auth/auth.dart';
 import 'package:lighthouse_core/db/db.dart';
-import 'package:lighthouse_core/db/firebase_configs.dart';
 
 import './dev_temp.dart';
 
@@ -22,6 +21,6 @@ final AccessKey superAccessKey = AccessKey.fromString(
 );
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DB.init(webOptions);
+  await DB.init();
   runApp(const App());
 }

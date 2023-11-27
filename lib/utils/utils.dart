@@ -57,7 +57,11 @@ extension ListUtils<O> on List<O> {
   List<N> listOf<N>(N Function(O) converter) => map(converter).toList();
 }
 
+extension JSONUtils on JSON {
+  T get<T>(String key) => this[key] as T;
 
+  List<Object?> getList(String key) => get<List<Object?>>(key);
+}
 
 extension DateUtils on DateTime {
   int get secondsSinceEpoch => (millisecondsSinceEpoch / 1000).round();
