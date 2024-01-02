@@ -16,32 +16,35 @@ abstract class SingleElement<T> extends Storable {
 }
 
 abstract class SchemaObject extends Storable {
-  final String title;
-  final String prefix;
-  final String objectId;
+  final List<Property> properties = [];
+  final title = HiddenProperty<String, String>('title');
+  final prefix = HiddenProperty<String, String>('prefix');
+  final objectId = HiddenProperty<String, String>('objectId');
 
   SchemaObject({
-    required this.title,
+    required String objectTitle,
     required String userKey,
-    required this.prefix,
-  }) : objectId = ObjectID.generate(prefix, userKey);
+    required String objectPrefix,
+  }) {
+    title.set(objectTitle);
+    prefix.set(objectPrefix);
+    objectId.set(ObjectID.generate(prefix.get(), userKey));
+    properties.addAll([title, prefix, objectId]);
+  }
 
-  SchemaObject.fromJson(JSON json)
-      : title = json['title'] as String,
-        prefix = json['prefix'] as String,
-        objectId = json['objectId'] as String;
+  SchemaObject.fromJson(JSON json) {
+    title.set(json.get<String>('title'));
+    prefix.set(json.get<String>('prefix'));
+    objectId.set(json.get<String>('objectId'));
+    properties.addAll([title, prefix, objectId]);
+  }
 
   @override
   Object? toStorable() => toJson();
 
   @mustCallSuper
-  Map<String, dynamic> toJson() {
-    return {
-      'prefix': prefix,
-      'objectId': objectId,
-      'title': title,
-    };
-  }
+  Map<String, dynamic> toJson() =>
+      Map.fromEntries([for (Property p in properties) p.toJson()]);
 }
 
 extension DTStorable on DateTime {

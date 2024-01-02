@@ -13,11 +13,11 @@ enum SprintStatus implements Storable {
   String toStorable() => name;
 }
 
-enum Dependency implements Storable {
+enum DependencyType implements Storable {
   isBlocked,
   isBlocking;
 
-  static Dependency fromString(String label) =>
+  static DependencyType fromString(String label) =>
       EnumUtils.enumFromString(values, label);
   @override
   String toStorable() => name;
@@ -32,6 +32,20 @@ enum TaskStatus implements Storable {
   String toStorable() => name;
 }
 
+class Context {
+  final String location;
+  final double energy;
+  final Duration duration;
+  final List<String> resources;
+
+  Context({
+    required this.location,
+    required this.energy,
+    required this.duration,
+    required this.resources,
+  });
+}
+
 class ContextLabel extends SingleElement<String> {
   final String contextLabel;
 
@@ -41,266 +55,299 @@ class ContextLabel extends SingleElement<String> {
   String convert() => contextLabel;
 }
 
+class Dependency extends SchemaObject {
+  final tasks = MultiSelectProperty<List<String>, List<String>>('Tasks');
+  final dependencyType = SingleSelectProperty<DependencyType, String>(
+    'Dependency Type',
+    key: 'dependencyType',
+    converter: DependencyType.fromString,
+  );
+
+  Dependency({
+    required super.userKey,
+    required super.objectTitle,
+  }) : super(objectPrefix: 'de') {
+    properties.addAll([tasks, dependencyType]);
+  }
+
+  Dependency.fromJson(JSON json) : super.fromJson(json) {
+    tasks.set(json.getList('tasks').listOf<String>((val) => val.toString()));
+    dependencyType
+        .set(DependencyType.fromString(json.get<String>('dependencyType')));
+  }
+}
+
 class Workbench extends SchemaObject {
-  final String userName;
-  final List<String> projects;
-  final List<String> goals;
-  final List<String> tasks;
-  final List<String> epics;
-  final List<String> sprints;
-  final List<String> events;
-  final List<String> bin;
+  final userName = TextProperty<String>('Username', key: 'userName');
+  final projects = MultiSelectProperty<List<String>, List<String>>('Projects',
+      defaultValue: []);
+  final goals = MultiSelectProperty<List<String>, List<String>>('Goals',
+      defaultValue: []);
+  final tasks = MultiSelectProperty<List<String>, List<String>>('Tasks',
+      defaultValue: []);
+  final epics = MultiSelectProperty<List<String>, List<String>>('Epics',
+      defaultValue: []);
+  final sprints = MultiSelectProperty<List<String>, List<String>>('Sprints',
+      defaultValue: []);
+  final events = MultiSelectProperty<List<String>, List<String>>('Events',
+      defaultValue: []);
+  final bin =
+      HiddenProperty<List<String>, List<String>>('Bin', defaultValue: []);
 
   Workbench({
-    required this.userName,
-    required this.projects,
-    required this.goals,
-    required this.tasks,
-    required this.epics,
-    required this.sprints,
-    required this.events,
-    required this.bin,
     required super.userKey,
-    required super.title,
-  }) : super(prefix: 'wb');
+    required super.objectTitle,
+  }) : super(objectPrefix: 'wb') {
+    properties.addAll(
+        [userName, projects, goals, tasks, epics, sprints, events, bin]);
+  }
 
-  Workbench.fromJson(JSON json)
-      : userName = json['userName'] as String,
-        projects =
-            (json['projects'] as List).listOf<String>((val) => val.toString()),
-        goals = (json['goals'] as List).listOf<String>((val) => val.toString()),
-        tasks = (json['tasks'] as List).listOf<String>((val) => val.toString()),
-        epics = (json['epics'] as List).listOf<String>((val) => val.toString()),
-        sprints =
-            (json['sprints'] as List).listOf<String>((val) => val.toString()),
-        events =
-            (json['events'] as List).listOf<String>((val) => val.toString()),
-        bin = (json['bin'] as List).listOf<String>((val) => val.toString()),
-        super.fromJson(json);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      ...super.toJson(),
-      'userName': userName,
-      'projects': projects,
-      'goals': goals,
-      'tasks': tasks,
-      'epics': epics,
-      'sprints': sprints,
-      'events': events,
-      'bin': bin,
-    };
+  Workbench.fromJson(JSON json) : super.fromJson(json) {
+    userName.set(json.get<String>('userName'));
+    projects
+        .set(json.getList('projects').listOf<String>((val) => val.toString()));
+    goals.set(json.getList('goals').listOf<String>((val) => val.toString()));
+    tasks.set(json.getList('tasks').listOf<String>((val) => val.toString()));
+    epics.set(json.getList('epics').listOf<String>((val) => val.toString()));
+    sprints
+        .set(json.getList('sprints').listOf<String>((val) => val.toString()));
+    events.set(json.getList('events').listOf<String>((val) => val.toString()));
+    bin.set(json.getList('bin').listOf<String>((val) => val.toString()));
+    properties.addAll(
+        [userName, projects, goals, tasks, epics, sprints, events, bin]);
   }
 }
 
 class Goal extends SchemaObject {
-  final double value;
+  final value = NumProperty<double, double>('Value', numConverter: (n) => n);
 
   Goal({
-    required this.value,
     required super.userKey,
-    required super.title,
-  }) : super(prefix: 'go');
+    required super.objectTitle,
+  }) : super(objectPrefix: 'go') {
+    properties.add(value);
+  }
 
-  Goal.fromJson(JSON json)
-      : value = json['value'] as double,
-        super.fromJson(json);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      ...super.toJson(),
-      'value': value,
-    };
+  Goal.fromJson(JSON json) : super.fromJson(json) {
+    value.set(json.get<double>('value'));
+    properties.add(value);
   }
 }
 
 class Project extends SchemaObject {
-  final List<String> goals;
-  final List<String> epics;
+  final goals = MultiSelectProperty<List<String>, List<String>>(
+    'Goals',
+  );
+  final epics = MultiSelectProperty<List<String>, List<String>>('Epics',
+      optional: true, defaultValue: []);
 
   Project({
-    required this.goals,
-    required this.epics,
     required super.userKey,
-    required super.title,
-  }) : super(prefix: 'pj');
+    required super.objectTitle,
+  }) : super(objectPrefix: 'pj') {
+    properties.addAll([goals, epics]);
+  }
 
-  Project.fromJson(JSON json)
-      : goals = (json['goals'] as List).listOf<String>((val) => val.toString()),
-        epics = (json['epics'] as List).listOf<String>((val) => val.toString()),
-        super.fromJson(json);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      ...super.toJson(),
-      'goals': goals,
-      'epics': epics,
-    };
+  Project.fromJson(JSON json) : super.fromJson(json) {
+    goals.set(json.getList('goals').listOf<String>((val) => val.toString()));
+    epics.set(json.getList('epics').listOf<String>((val) => val.toString()));
+    properties.addAll([goals, epics]);
   }
 }
 
 class Epic extends SchemaObject {
-  final List<String> tasks;
-  final String project;
+  final tasks = MultiSelectProperty<List<String>, List<String>>(
+    'Tasks',
+    optional: true,
+    defaultValue: [],
+  );
+  final project = SingleSelectProperty<String, String>('Project');
 
   Epic({
-    required this.tasks,
-    required this.project,
     required super.userKey,
-    required super.title,
-  }) : super(prefix: 'ep');
+    required super.objectTitle,
+  }) : super(objectPrefix: 'ep') {
+    properties.addAll([tasks, project]);
+  }
 
-  Epic.fromJson(JSON json)
-      : tasks = (json['tasks'] as List).listOf<String>((val) => val.toString()),
-        project = json['project'] as String,
-        super.fromJson(json);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      ...super.toJson(),
-      'tasks': tasks,
-      'project': project,
-    };
+  Epic.fromJson(JSON json) : super.fromJson(json) {
+    tasks.set(json.getList('tasks').listOf<String>((val) => val.toString()));
+    project.set(json.get<String>('project'));
+    properties.addAll([tasks, project]);
   }
 }
 
 class Sprint extends SchemaObject {
-  final List<String> tasks;
-  final SprintStatus status;
-  final DateTime start;
-  final DateTime end;
+  final tasks = MultiSelectProperty<List<String>, List<String>>('Tasks',
+      optional: true, defaultValue: []);
+  final status = SingleSelectProperty<SprintStatus, String>(
+    'Status',
+    optional: true,
+    defaultValue: 'inbox',
+    converter: SprintStatus.fromString,
+  );
+  final start = DateTimeProperty('Start');
+  final end = DateTimeProperty('End');
 
   Sprint({
-    required this.tasks,
-    required this.status,
-    required this.start,
-    required this.end,
     required super.userKey,
-    required super.title,
-  }) : super(prefix: 'sp');
+    required super.objectTitle,
+  }) : super(objectPrefix: 'sp') {
+    properties.addAll([tasks, start, start, end]);
+  }
 
-  Sprint.fromJson(JSON json)
-      : tasks = (json['tasks'] as List).listOf<String>((val) => val.toString()),
-        status = SprintStatus.fromString(json['status'] as String),
-        start = DTStorable.fromStorable((json['start'] as int)),
-        end = DTStorable.fromStorable(json['end'] as int),
-        super.fromJson(json);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      ...super.toJson(),
-      'tasks': tasks,
-      'status': status.toStorable(),
-      'start': start.toStorable(),
-      'end': end.toStorable(),
-    };
+  Sprint.fromJson(JSON json) : super.fromJson(json) {
+    tasks.set(json.getList('tasks').listOf<String>((val) => val.toString()));
+    status.set(SprintStatus.fromString(json.get<String>('status')));
+    start.set(DTStorable.fromStorable(json.get<int>('start')));
+    end.set(DTStorable.fromStorable(json.get<int>('end')));
   }
 }
 
 class Task extends SchemaObject {
-  final String description;
-  final List<Dependency> dependencies;
-  final TaskStatus status;
-  final DateTime due;
-  final DateTime assigned;
-  final Duration duration;
-  final double load;
-  final List<ContextLabel> contexts;
-  final String epic;
-  final String sprint;
-  final String project;
+  /// Optional
+  final description = TextProperty<String?>('Description', optional: true);
+  final dependencies = MultiSelectProperty<List<String>?, List<String>>(
+    'Dependencies',
+    optional: true,
+  );
+  final status = SingleSelectProperty<TaskStatus, String>(
+    'Status',
+    optional: true,
+    defaultValue: 'inbox',
+    converter: TaskStatus.fromString,
+  );
+  final due = DateTimeProperty(
+    'Due Date',
+    optional: true,
+    key: 'due',
+  );
+
+  final assigned = DateTimeProperty(
+    'Assigned Date',
+    optional: true,
+    key: 'assigned',
+  );
+
+  final duration = NumProperty<Duration?, int?>(
+    'Duration',
+    optional: true,
+    numConverter: (minutes) =>
+        minutes != null ? DurationStorable.fromStorable(minutes) : null,
+  );
+
+  final load = NumProperty<double?, double?>(
+    'Estimated Load',
+    optional: true,
+    defaultValue: null,
+    key: 'load',
+    numConverter: (n) => n,
+  );
+
+  final contexts = MultiSelectProperty<List<String>, List<String>>(
+    'Context Labels',
+    optional: true,
+    defaultValue: [],
+    key: 'contexts',
+  );
+
+  final epic = TextProperty<String?>('Epic', optional: true);
+  final sprint = TextProperty<String?>('Sprint', optional: true);
+  final project = TextProperty<String?>('Project', optional: true);
 
   Task({
-    required this.description,
-    required this.dependencies,
-    required this.status,
-    required this.due,
-    required this.assigned,
-    required this.duration,
-    required this.load,
-    required this.contexts,
-    required this.epic,
-    required this.sprint,
-    required this.project,
     required super.userKey,
-    required super.title,
-  }) : super(prefix: 'tk');
+    required super.objectTitle,
+  }) : super(objectPrefix: 'tk') {
+    properties.addAll([
+      description,
+      dependencies,
+      status,
+      due,
+      assigned,
+      duration,
+      load,
+      contexts,
+      epic,
+      sprint,
+      project,
+    ]);
+  }
 
-  Task.fromJson(JSON json)
-      : description = json['description'] as String,
-        dependencies = (json['description'] as List)
-            .listOf<Dependency>((val) => Dependency.fromString(val)),
-        status = TaskStatus.fromString(json['status'] as String),
-        due = DTStorable.fromStorable(json['due'] as int),
-        assigned = DTStorable.fromStorable(json['assigned'] as int),
-        duration = DurationStorable.fromStorable(json['duration'] as int),
-        load = json['load'] as double,
-        contexts = (json['contexts'] as List)
-            .listOf<ContextLabel>((val) => ContextLabel(val)),
-        epic = json['epic'] as String,
-        sprint = json['sprint'] as String,
-        project = json['project'] as String,
-        super.fromJson(json);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      ...super.toJson(),
-      'description': description,
-      'dependencies': dependencies.toStorableList(),
-      'status': status.toStorable(),
-      'due': due.toStorable(),
-      'assigned': assigned.toStorable(),
-      'duration': duration.toStorable(),
-      'load': load,
-      'contexts': contexts.toStorableList(),
-      'epic': epic,
-      'sprint': sprint,
-      'project': project,
-    };
+  Task.fromJson(JSON json) : super.fromJson(json) {
+    description.set(json.getOrNull<String>('description'));
+    dependencies.set(
+        json.getList('dependencies').listOf<String>((val) => val.toString()));
+    status.set(TaskStatus.fromString(json.get<String>('status')));
+    due.set(json.containsKey('due')
+        ? DTStorable.fromStorable(json.get<int>('due'))
+        : null);
+    assigned.set(json.containsKey('assigned')
+        ? DTStorable.fromStorable(json.get<int>('assigned'))
+        : null);
+    duration.set(json.containsKey('duration')
+        ? DurationStorable.fromStorable(json.get<int>('duration'))
+        : null);
+    load.set(json.containsKey('load') ? json.get<double>('load') : null);
+    contexts
+        .set(json.getList('contexts').listOf<String>((val) => val.toString()));
+    epic.set(json.getOrNull<String>('epic'));
+    sprint.set(json.get<String>('sprint'));
+    project.set(json.get<String>('project'));
+    properties.addAll([
+      description,
+      dependencies,
+      status,
+      due,
+      assigned,
+      duration,
+      load,
+      contexts,
+      epic,
+      sprint,
+      project
+    ]);
   }
 }
 
 class Event extends SchemaObject {
-  final String description;
-  final String task;
-  final DateTime start;
-  final Duration duration;
-  final RepeatRule? repeatRule;
+  final description = TextProperty<String?>(
+    'Description',
+    optional: true,
+  );
+  final task = TextProperty<String?>(
+    'Task',
+    optional: true,
+  );
+  final start = DateTimeProperty('Start');
+
+  final duration = NumProperty<int?, int?>(
+    'Duration',
+    optional: true,
+    numConverter: (n) => n,
+  );
+
+  final repeatRule = ExpandableProperty(
+    'Repeat Rule',
+    key: 'repeatRule',
+    // converter
+    properties: [],
+  );
 
   Event({
-    required this.description,
-    required this.task,
-    required this.start,
-    required this.duration,
-    this.repeatRule,
     required super.userKey,
-    required super.title,
-  }) : super(prefix: 'ev');
+    required super.objectTitle,
+  }) : super(objectPrefix: 'ev');
 
-  Event.fromJson(JSON json)
+  Event.fromJson(JSON json) : super.fromJson(json);
+
+  /* 
       : description = json['description'] as String,
         task = json['task'] as String,
         start = DTStorable.fromStorable(json['start'] as int),
         duration = DurationStorable.fromStorable(json['duration'] as int),
         repeatRule = RepeatRule.fromJson(json['repeatRule'] as JSON),
-        super.fromJson(json);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      ...super.toJson(),
-      'description': description,
-      'task': task,
-      'start': start.toStorable(),
-      'duration': duration.toStorable(),
-    };
-  }
+        super.fromJson(json); */
 }
 
 enum RRFrequency implements Storable {
@@ -380,10 +427,10 @@ class RepeatRule extends Storable {
       if (until != null) 'until': until!.toStorable(),
       if (count != null) 'count': count!,
       if (countUnit != null) 'countUnit': countUnit!.name,
-      if (weekDays != null)
-        'weekDays': <String>[
+      'weekDays': <String>[
+        if (weekDays != null)
           for (RRWeekDays weekdays in weekDays!) weekdays.name
-        ],
+      ],
     };
   }
 }

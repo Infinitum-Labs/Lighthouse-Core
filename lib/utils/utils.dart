@@ -57,8 +57,18 @@ extension ListUtils<O> on List<O> {
   List<N> listOf<N>(N Function(O) converter) => map(converter).toList();
 }
 
+extension PropertyListUtils<T, R> on List<Property<T, R>> {
+  List<T> getValues() => [for (final prop in this) prop.get()];
+}
+
 extension JSONUtils on JSON {
   T get<T>(String key) => this[key] as T;
+
+  T? getOrNull<T>(String key, [T Function()? orElse]) => containsKey(key)
+      ? get<T>(key)
+      : orElse == null
+          ? null
+          : orElse();
 
   List<Object?> getList(String key) => get<List<Object?>>(key);
 }
@@ -66,6 +76,20 @@ extension JSONUtils on JSON {
 extension DateUtils on DateTime {
   int get secondsSinceEpoch => (millisecondsSinceEpoch / 1000).round();
   int get minutesSinceEpoch => (millisecondsSinceEpoch / dtConvConst).round();
+}
+
+extension StringUtils on String {
+  String toCamelCase() {
+    final List<String> chunks = split(' ');
+    final List<String> result = [];
+    result.add(chunks[0].toLowerCase());
+    for (int i = 1; i < chunks.length; i++) {
+      result.add(
+        "${chunks[i][0].toUpperCase()}${chunks[i].substring(1).toLowerCase()}",
+      );
+    }
+    return result.join('');
+  }
 }
 
 const List<String> alphabets = [
@@ -102,9 +126,12 @@ class EnumUtils {
     Iterable<T> enumValues,
     String label,
   ) {
-    return enumValues.firstWhere(
-      (T value) => value.name == label,
-    );
+    final result = enumValues.where((T value) => value.name == label);
+    if (result.isEmpty) {
+      throw "EnumFromString failed for value '$label'";
+    } else {
+      return result.first;
+    }
   }
 }
 

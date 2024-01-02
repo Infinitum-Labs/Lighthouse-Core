@@ -8,7 +8,9 @@ import 'package:lighthouse_core/utils/utils.dart';
 
 part './natives.dart';
 part './storable.dart';
-part './view_data_binder.dart';
+part './property.dart';
+part './view_data_binders/data_binding.dart';
+part './view_data_binders/component_provider.dart';
 
 /// This DB class is NOT a service. It is only meant to be used by the app,
 /// since it will not check for permissions before making requests.
@@ -28,43 +30,44 @@ class DB {
   static final CollectionReference<Workbench> workbenchesColl = db
       .collection('workbenches')
       .withConverter(
-          fromFirestore: (snapshot, _) => Workbench.fromJson(snapshot.data()!),
+          fromFirestore: (snapshot, _) =>
+              loadNative<Workbench>(snapshot.data()!),
           toFirestore: (workbench, _) => workbench.toJson());
 
   static final CollectionReference<Goal> goalsColl = db
       .collection('goals')
       .withConverter(
-          fromFirestore: (snapshot, _) => Goal.fromJson(snapshot.data()!),
+          fromFirestore: (snapshot, _) => loadNative<Goal>(snapshot.data()!),
           toFirestore: (goal, _) => goal.toJson());
 
   static final CollectionReference<Project> projectsColl = db
       .collection('projects')
       .withConverter(
-          fromFirestore: (snapshot, _) => Project.fromJson(snapshot.data()!),
+          fromFirestore: (snapshot, _) => loadNative<Project>(snapshot.data()!),
           toFirestore: (project, _) => project.toJson());
 
   static final CollectionReference<Epic> epicsColl = db
       .collection('epics')
       .withConverter(
-          fromFirestore: (snapshot, _) => Epic.fromJson(snapshot.data()!),
+          fromFirestore: (snapshot, _) => loadNative<Epic>(snapshot.data()!),
           toFirestore: (epic, _) => epic.toJson());
 
   static final CollectionReference<Sprint> sprintsColl = db
       .collection('sprints')
       .withConverter(
-          fromFirestore: (snapshot, _) => Sprint.fromJson(snapshot.data()!),
+          fromFirestore: (snapshot, _) => loadNative<Sprint>(snapshot.data()!),
           toFirestore: (sprint, _) => sprint.toJson());
 
   static final CollectionReference<Task> tasksColl = db
       .collection('tasks')
       .withConverter(
-          fromFirestore: (snapshot, _) => Task.fromJson(snapshot.data()!),
+          fromFirestore: (snapshot, _) => loadNative<Task>(snapshot.data()!),
           toFirestore: (task, _) => task.toJson());
 
   static final CollectionReference<Event> eventsColl = db
       .collection('events')
       .withConverter(
-          fromFirestore: (snapshot, _) => Event.fromJson(snapshot.data()!),
+          fromFirestore: (snapshot, _) => loadNative<Event>(snapshot.data()!),
           toFirestore: (event, _) => event.toJson());
 
   static T loadNative<T extends Storable>(JSON json) {
