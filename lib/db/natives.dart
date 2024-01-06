@@ -56,11 +56,13 @@ class ContextLabel extends SingleElement<String> {
 }
 
 class Dependency extends SchemaObject {
-  final tasks = MultiSelectProperty<List<String>, List<String>>('Tasks');
-  final dependencyType = SingleSelectProperty<DependencyType, String>(
+  final tasks = MultiSelectProperty<String>('Tasks', options: []);
+  final dependencyType = SingleSelectProperty<DependencyType>(
     'Dependency Type',
     key: 'dependencyType',
-    converter: DependencyType.fromString,
+    options: DependencyType.values,
+    toNative: DependencyType.fromString,
+    toStorable: (item) => item.toStorable(),
   );
 
   Dependency({
@@ -79,18 +81,18 @@ class Dependency extends SchemaObject {
 
 class Workbench extends SchemaObject {
   final userName = TextProperty<String>('Username', key: 'userName');
-  final projects = MultiSelectProperty<List<String>, List<String>>('Projects',
-      defaultValue: []);
-  final goals = MultiSelectProperty<List<String>, List<String>>('Goals',
-      defaultValue: []);
-  final tasks = MultiSelectProperty<List<String>, List<String>>('Tasks',
-      defaultValue: []);
-  final epics = MultiSelectProperty<List<String>, List<String>>('Epics',
-      defaultValue: []);
-  final sprints = MultiSelectProperty<List<String>, List<String>>('Sprints',
-      defaultValue: []);
-  final events = MultiSelectProperty<List<String>, List<String>>('Events',
-      defaultValue: []);
+  final projects =
+      MultiSelectProperty<String>('Projects', options: [], defaultValue: []);
+  final goals =
+      MultiSelectProperty<String>('Goals', options: [], defaultValue: []);
+  final tasks =
+      MultiSelectProperty<String>('Tasks', options: [], defaultValue: []);
+  final epics =
+      MultiSelectProperty<String>('Epics', options: [], defaultValue: []);
+  final sprints =
+      MultiSelectProperty<String>('Sprints', options: [], defaultValue: []);
+  final events =
+      MultiSelectProperty<String>('Events', options: [], defaultValue: []);
   final bin =
       HiddenProperty<List<String>, List<String>>('Bin', defaultValue: []);
 
@@ -135,11 +137,12 @@ class Goal extends SchemaObject {
 }
 
 class Project extends SchemaObject {
-  final goals = MultiSelectProperty<List<String>, List<String>>(
+  final goals = MultiSelectProperty<String>(
     'Goals',
+    options: [],
   );
-  final epics = MultiSelectProperty<List<String>, List<String>>('Epics',
-      optional: true, defaultValue: []);
+  final epics = MultiSelectProperty<String>('Epics',
+      optional: true, options: [], defaultValue: []);
 
   Project({
     required super.userKey,
@@ -156,12 +159,13 @@ class Project extends SchemaObject {
 }
 
 class Epic extends SchemaObject {
-  final tasks = MultiSelectProperty<List<String>, List<String>>(
+  final tasks = MultiSelectProperty<String>(
     'Tasks',
     optional: true,
+    options: [],
     defaultValue: [],
   );
-  final project = SingleSelectProperty<String, String>('Project');
+  final project = SingleSelectProperty<String>('Project', options: []);
 
   Epic({
     required super.userKey,
@@ -178,13 +182,15 @@ class Epic extends SchemaObject {
 }
 
 class Sprint extends SchemaObject {
-  final tasks = MultiSelectProperty<List<String>, List<String>>('Tasks',
-      optional: true, defaultValue: []);
-  final status = SingleSelectProperty<SprintStatus, String>(
+  final tasks = MultiSelectProperty<String>('Tasks',
+      options: [], optional: true, defaultValue: []);
+  final status = SingleSelectProperty<SprintStatus>(
     'Status',
     optional: true,
-    defaultValue: 'inbox',
-    converter: SprintStatus.fromString,
+    options: SprintStatus.values,
+    defaultValue: SprintStatus.inbox,
+    toNative: SprintStatus.fromString,
+    toStorable: (item) => item.toStorable(),
   );
   final start = DateTimeProperty('Start');
   final end = DateTimeProperty('End');
@@ -205,17 +211,20 @@ class Sprint extends SchemaObject {
 }
 
 class Task extends SchemaObject {
-  /// Optional
   final description = TextProperty<String?>('Description', optional: true);
-  final dependencies = MultiSelectProperty<List<String>?, List<String>>(
+
+  /// Possible error with this property not specifying toStorable/toNative
+  final dependencies = MultiSelectProperty<String>(
     'Dependencies',
     optional: true,
+    options: [],
   );
-  final status = SingleSelectProperty<TaskStatus, String>(
+  final status = SingleSelectProperty<TaskStatus>(
     'Status',
     optional: true,
-    defaultValue: 'inbox',
-    converter: TaskStatus.fromString,
+    options: TaskStatus.values,
+    defaultValue: TaskStatus.inbox,
+    toNative: TaskStatus.fromString,
   );
   final due = DateTimeProperty(
     'Due Date',
@@ -244,9 +253,10 @@ class Task extends SchemaObject {
     numConverter: (n) => n,
   );
 
-  final contexts = MultiSelectProperty<List<String>, List<String>>(
+  final contexts = MultiSelectProperty<String>(
     'Context Labels',
     optional: true,
+    options: [],
     defaultValue: [],
     key: 'contexts',
   );

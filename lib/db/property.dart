@@ -4,18 +4,21 @@ part of lh.core.db;
 abstract class Property<T, R> implements Storable {
   final String label;
   final String _key;
-  final T Function(R) convert;
+  final T Function(R) convertToNative;
+  final R Function(T) convertToStorable;
   late final T _value;
-  final R? defaultValue;
+  final T? defaultValue;
   final bool optional;
 
   Property(
     this.label, {
     this.optional = false,
     this.defaultValue,
-    T Function(R)? converter,
+    T Function(R)? toNative,
+    R Function(T)? toStorable,
     String? key,
-  })  : convert = converter ?? ((R r) => r as T),
+  })  : convertToNative = toNative ?? ((R r) => r as T),
+        convertToStorable = toStorable ?? ((T t) => t as R),
         _key = key ?? label.toCamelCase();
 
   void set(T value) => _value = value;
@@ -26,7 +29,7 @@ abstract class Property<T, R> implements Storable {
     } catch (e) {
       if (optional) {
         if (defaultValue != null) {
-          return convert(defaultValue!);
+          return defaultValue!;
         } else {
           throw "Property [${toString()}] named [$label] is optional but does not have a default value specified";
         }
@@ -57,7 +60,8 @@ class HiddenProperty<T, R> extends Property<T, R> {
     super.optional,
     super.defaultValue,
     super.key,
-    super.converter,
+    super.toNative,
+    super.toStorable,
   });
 }
 
@@ -67,7 +71,8 @@ abstract class FormProperty<T, R> extends Property<T, R> {
     super.optional,
     super.defaultValue,
     super.key,
-    super.converter,
+    super.toNative,
+    super.toStorable,
   });
 
   Widget createComponent(ComponentProvider provider);
@@ -79,13 +84,14 @@ class TextProperty<T> extends FormProperty<T, String> {
     super.optional,
     super.defaultValue,
     super.key,
-    super.converter,
+    super.toNative,
+    super.toStorable,
   });
 
   @override
   Widget createComponent(ComponentProvider provider) {
-    return provider.textField((String text) {
-      set(convert(text));
+    return provider.textField(this, (String text) {
+      set(convertToNative(text));
     });
   }
 }
@@ -97,7 +103,7 @@ class NumProperty<T, N extends num?> extends FormProperty<T, String> {
     super.defaultValue,
     super.key,
     required T Function(N) numConverter,
-  }) : super(converter: (String input) {
+  }) : super(toNative: (String input) {
           if (N is int) {
             return numConverter(int.parse(input) as N);
           } else {
@@ -107,42 +113,50 @@ class NumProperty<T, N extends num?> extends FormProperty<T, String> {
 
   @override
   Widget createComponent(ComponentProvider provider) {
-    return provider.numberField((String text) {
-      set(convert(text));
+    return provider.numberField(this, (String text) {
+      set(convertToNative(text));
     });
   }
 }
 
-class MultiSelectProperty<T, R> extends FormProperty<T, R> {
+class MultiSelectProperty<T> extends FormProperty<List<T>, List<String>> {
+  final List<T> options;
+
   MultiSelectProperty(
     super.label, {
     super.optional,
+    required this.options,
     super.defaultValue,
     super.key,
-    super.converter,
+    super.toNative,
+    super.toStorable,
   });
 
   @override
   Widget createComponent(ComponentProvider provider) {
-    return provider.multiDropdown((R selection) {
-      set(convert(selection));
+    return provider.multiDropdown<T>(this, (List<String> selections) {
+      set(convertToNative(selections));
     });
   }
 }
 
-class SingleSelectProperty<T, R> extends FormProperty<T, R> {
+class SingleSelectProperty<T> extends FormProperty<T, String> {
+  final List<T> options;
+
   SingleSelectProperty(
     super.label, {
     super.optional,
+    required this.options,
     super.defaultValue,
     super.key,
-    super.converter,
+    super.toNative,
+    super.toStorable,
   });
 
   @override
   Widget createComponent(ComponentProvider provider) {
-    return provider.singleDropdown((R selection) {
-      set(convert(selection));
+    return provider.singleDropdown(this, (String selection) {
+      set(convertToNative(selection));
     });
   }
 }
@@ -154,14 +168,14 @@ class DateTimeProperty extends FormProperty<DateTime?, String?> {
     super.defaultValue,
     super.key,
   }) : super(
-          converter: (String? input) =>
+          toNative: (String? input) =>
               input != null ? DateTime.parse(input) : null,
         );
 
   @override
   Widget createComponent(ComponentProvider provider) {
-    return provider.datePicker((String dtString) {
-      set(convert(dtString));
+    return provider.datePicker(this, (String dtString) {
+      set(convertToNative(dtString));
     });
   }
 }
@@ -175,10 +189,11 @@ class ExpandableProperty<T> extends FormProperty<T, dynamic> {
     super.optional,
     super.defaultValue,
     super.key,
-    super.converter,
+    super.toNative,
+    super.toStorable,
   });
 
   @override
   Widget createComponent(ComponentProvider provider) =>
-      provider.expandableSection(properties);
+      provider.expandableSection(this, properties);
 }

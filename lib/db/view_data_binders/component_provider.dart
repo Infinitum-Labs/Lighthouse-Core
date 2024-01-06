@@ -2,18 +2,32 @@ part of lh.core.db;
 
 abstract class ComponentProvider {
   Widget textField(
+    TextProperty property,
     void Function(String) editingCompleteCallback,
   );
 
   Widget numberField(
+    NumProperty property,
     void Function(String) editingCompleteCallback,
   );
 
-  Widget multiDropdown<R>(void Function(R) selection);
+  Widget multiDropdown<T>(
+    MultiSelectProperty<T> property,
+    void Function(List<String>) selections,
+  );
 
-  Widget singleDropdown<R>(void Function(R) selection);
+  Widget singleDropdown<T>(
+    SingleSelectProperty<T> property,
+    void Function(String) selection,
+  );
 
-  Widget datePicker(void Function(String) dtString);
+  Widget datePicker(
+    DateTimeProperty property,
+    void Function(String) dtString,
+  );
 
-  Widget expandableSection(List<FormProperty> properties);
+  Widget expandableSection(
+    ExpandableProperty property,
+    List<FormProperty> properties,
+  );
 }
