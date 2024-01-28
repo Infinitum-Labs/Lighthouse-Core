@@ -6,7 +6,7 @@ abstract class Property<T, R> implements Storable {
   final String _key;
   final T Function(R) convertToNative;
   final R Function(T) convertToStorable;
-  late final T _value;
+  late T _value;
   final T? defaultValue;
   final bool optional;
 

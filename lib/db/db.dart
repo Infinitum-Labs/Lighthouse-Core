@@ -24,7 +24,9 @@ class DB {
     await Firebase.initializeApp(
       options: webOptions,
     );
-    await db.enablePersistence();
+    /* await db.enablePersistence(
+      const PersistenceSettings(synchronizeTabs: true),
+    ); */
   }
 
   static final CollectionReference<Workbench> workbenchesColl = db

@@ -225,6 +225,7 @@ class Task extends SchemaObject {
     options: TaskStatus.values,
     defaultValue: TaskStatus.inbox,
     toNative: TaskStatus.fromString,
+    toStorable: (item) => item.toStorable(),
   );
   final due = DateTimeProperty(
     'Due Date',
