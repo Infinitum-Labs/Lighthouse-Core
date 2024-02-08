@@ -43,10 +43,15 @@ abstract class Property<T, R> implements Storable {
 
   @override
   Object? toStorable() {
-    if (_value is Storable) {
-      return (_value as Storable).toStorable();
+    final T val = get();
+    if (val is Storable) {
+      return val.toStorable();
+    } else if (val is Duration) {
+      return val.toStorable();
+    } else if (val is DateTime) {
+      return val.toStorable();
     } else {
-      return _value;
+      return val;
     }
   }
 

@@ -218,6 +218,7 @@ class Task extends SchemaObject {
     'Dependencies',
     optional: true,
     options: [],
+    defaultValue: [],
   );
   final status = SingleSelectProperty<TaskStatus>(
     'Status',

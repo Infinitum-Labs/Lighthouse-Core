@@ -19,7 +19,7 @@ abstract class SchemaObject extends Storable {
   final List<Property> properties = [];
   final title = HiddenProperty<String, String>('title');
   final prefix = HiddenProperty<String, String>('prefix');
-  final objectId = HiddenProperty<String, String>('objectId');
+  final objectId = HiddenProperty<String, String>('objectId', key: 'objectId');
 
   SchemaObject({
     required String objectTitle,
