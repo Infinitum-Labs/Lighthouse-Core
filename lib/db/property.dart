@@ -28,10 +28,17 @@ abstract class Property<T, R> implements Storable {
       return _value;
     } catch (e) {
       if (optional) {
-        if (defaultValue != null) {
+        // if T is nullable, return the default value, which can also be null
+        if (null is T) {
           return defaultValue!;
         } else {
-          throw "Property [${toString()}] named [$label] is optional but does not have a default value specified";
+          // if T is not nullable, but the default value is null (none provided)
+          if (defaultValue == null) {
+            throw "Property [${toString()}] named [$label] is optional but does not have a default value specified";
+          } else {
+            // if T is not nullable and the default value is not null, then great!
+            return defaultValue!;
+          }
         }
       } else {
         throw "Property [${toString()}] named [$label] has not initialised inner value";

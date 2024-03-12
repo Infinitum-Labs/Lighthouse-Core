@@ -17,16 +17,14 @@ abstract class SingleElement<T> extends Storable {
 
 abstract class SchemaObject extends Storable {
   final List<Property> properties = [];
-  final title = HiddenProperty<String, String>('title');
+  final title = TextProperty<String>('Title', key: 'title');
   final prefix = HiddenProperty<String, String>('prefix');
   final objectId = HiddenProperty<String, String>('objectId', key: 'objectId');
 
   SchemaObject({
-    required String objectTitle,
     required String userKey,
     required String objectPrefix,
   }) {
-    title.set(objectTitle);
     prefix.set(objectPrefix);
     objectId.set(ObjectID.generate(prefix.get(), userKey));
     properties.addAll([title, prefix, objectId]);
