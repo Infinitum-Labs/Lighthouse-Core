@@ -4,6 +4,7 @@ enum LighthouseCoreComponent {
   lhcore_utils_utils,
   lhcore_utils_types,
   lhcore_db_db,
+  lhcore_db_property,
 }
 
 abstract class LighthouseException extends Storable implements Exception {

@@ -17,6 +17,7 @@ class DBService extends LHService {
         .where('userName', isEqualTo: userName)
         .get();
     final QueryDocumentSnapshot docRef = snapshot.docs.first;
-    return DB.loadNative<Workbench>(docRef.data() as JSON);
+    //return DB.loadNative<Workbench>(docRef.data() as JSON);
+    throw "whut";
   }
 }

@@ -17,9 +17,10 @@ abstract class SingleElement<T> extends Storable {
 
 abstract class SchemaObject extends Storable {
   final List<Property> properties = [];
-  final title = TextProperty<String>('Title', key: 'title');
-  final prefix = HiddenProperty<String, String>('prefix');
-  final objectId = HiddenProperty<String, String>('objectId', key: 'objectId');
+  final title = TextProperty<String>('Title', key: 'title', defaultValue: null);
+  final prefix = HiddenProperty<String, String>('prefix', defaultValue: null);
+  final objectId = HiddenProperty<String, String>('objectId',
+      key: 'objectId', defaultValue: null);
 
   SchemaObject({
     required String userKey,
