@@ -63,8 +63,7 @@ class Dependency extends SchemaObject {
     key: 'dependencyType',
     defaultValue: DependencyType.isBlocked,
     options: DependencyType.values,
-    toNative: DependencyType.fromString,
-    toStorable: (item) => item.toStorable(),
+    native: DependencyType.fromString,
   );
 
   Dependency({
@@ -182,8 +181,7 @@ class Sprint extends SchemaObject {
     'Status',
     options: SprintStatus.values,
     defaultValue: SprintStatus.inbox,
-    toNative: SprintStatus.fromString,
-    toStorable: (item) => item.toStorable(),
+    native: SprintStatus.fromString,
   );
   final start = DateTimeProperty('Start');
   final end = DateTimeProperty('End');
@@ -218,8 +216,7 @@ class Task extends SchemaObject {
     'Status',
     options: TaskStatus.values,
     defaultValue: TaskStatus.inbox,
-    toNative: TaskStatus.fromString,
-    toStorable: (item) => item.toStorable(),
+    native: TaskStatus.fromString,
   );
   final due = DateTimeProperty(
     'Due Date',
@@ -235,7 +232,7 @@ class Task extends SchemaObject {
     'Duration',
     defaultValue: null,
     numConverter: (minutes) =>
-        minutes != null ? DurationStorable.fromStorable(minutes) : null,
+        minutes != null ? Duration(minutes: minutes) : null,
   );
 
   final load = NumProperty<double?, double?>(
@@ -403,7 +400,8 @@ class RepeatRule extends Storable {
 
   RepeatRule.fromJson(JSON json)
       : frequency = RRFrequency.fromString(json['freq'] as String),
-        until = DTStorable.fromStorable(json['until'] as int),
+        until = DateTime.fromMillisecondsSinceEpoch(
+            (json['until'] as int) * dtConvConst),
         count = json['count'] as int,
         countUnit = RRCountUnit.fromString(json['countUnit'] as String),
         weekDays = (json['weekDays'] as List)
@@ -413,7 +411,7 @@ class RepeatRule extends Storable {
   Object? toStorable() {
     return <String, dynamic>{
       'freq': frequency.name,
-      if (until != null) 'until': until!.toStorable(),
+      if (until != null) 'until': until!.isStorable(true),
       if (count != null) 'count': count!,
       if (countUnit != null) 'countUnit': countUnit!.name,
       'weekDays': <String>[

@@ -24,7 +24,7 @@ abstract class LighthouseException extends Storable implements Exception {
   Object? toStorable() {
     return {
       'exceptionId': exceptionId,
-      'timestamp': timestamp.toStorable(),
+      'timestamp': timestamp.isStorable(true),
       'title': title,
       'desc': desc,
       if (dataSnapshot != null) 'savedData': dataSnapshot!.toStorable(),

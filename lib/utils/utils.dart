@@ -135,7 +135,62 @@ class EnumUtils {
   }
 }
 
+bool equalsType<A, B>() => A == B;
+
 extension TypeUtils on Object? {
-  bool get isNative =>
-      this is num || this is String || this is bool || this is List<Storable>;
+  bool get isNative => this is num || this is String || this is bool;
+
+  /// If
+  dynamic isStorable([bool shouldReturnVal = false]) {
+    if (this == null) {
+      return shouldReturnVal ? null : true;
+    } else if (isNative) {
+      return shouldReturnVal ? this : true;
+    } else if (this is DateTime) {
+      return shouldReturnVal ? (this as DateTime).minutesSinceEpoch : true;
+    } else if (this is Duration) {
+      return shouldReturnVal ? (this as Duration).inMinutes : true;
+    } else if (this is Storable) {
+      return shouldReturnVal ? (this as Storable).toStorable() : true;
+    } else if (this is Iterable) {
+      if (this is Iterable<Storable>) {
+        return shouldReturnVal
+            ? [for (final st in this as Iterable<Storable>) st.toStorable()]
+            : true;
+      } else {
+        bool isOnlyPrimitive = true;
+        for (final x in (this as Iterable<Object?>)) {
+          if (!x.isNative) {
+            isOnlyPrimitive = false;
+            if (!x.isStorable()) {
+              return shouldReturnVal
+                  ? throw "shouldReturnVal for isStorable, but iterable has non-storables"
+                  : false;
+            }
+          }
+        }
+        if (isOnlyPrimitive) {
+          return shouldReturnVal ? this : true;
+        } else {
+          return shouldReturnVal
+              ? [
+                  for (final n in (this as Iterable<Object?>))
+                    n.isStorable(true)
+                ]
+              : true;
+        }
+      }
+    } else if (this is Map) {
+      if ((this as Map).keys.isStorable() &&
+          (this as Map).values.isStorable()) {
+        return shouldReturnVal ? this : true;
+      } else {
+        return shouldReturnVal
+            ? throw "shouldReturnVal for isStorable, but map has non-storables"
+            : false;
+      }
+    } else {
+      return false;
+    }
+  }
 }

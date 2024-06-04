@@ -11,7 +11,6 @@ part './storable.dart';
 part './property.dart';
 part './view_data_binders/data_binding.dart';
 part './view_data_binders/component_provider.dart';
-part './view_data_binders/data_controller.dart';
 
 /// This DB class is NOT a service. It is only meant to be used by the app,
 /// since it will not check for permissions before making requests.
