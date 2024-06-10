@@ -1,62 +1,68 @@
 part of lh.core.engines.helmscript.language_bundle;
 
 class HSParser extends Parser {
+  ParseResult result = ParseResult();
   late TokenCursor cursor;
 
   @override
-  AST parse(List<Token> tokens) {
+  ParseResult parse(List<Token> tokens) {
+    result = ParseResult();
     cursor = TokenCursor(tokens);
-    AST ast = AST(nodes: []);
 
     while (!cursor.reachedEOF) {
-      final HSCommandRootNode rootNode = parseCommand();
-      final HSCommandNode commandNode = HSCommandNode(root: rootNode);
-      if (!cursor.reachedEOF) cursor.advance();
+      final HSCommandNode commandNode = HSCommandNode();
+      final HSCommandRootNode rootNode = parseRoot();
+      commandNode.root = rootNode;
+      result.ast.nodes.add(commandNode);
+      if (!cursor.reachedEOF && cursor.current.lexeme.isWhitespace) {
+        cursor.skip(result);
+      }
       while (cursor.current.tokenType == const TokenType.string()) {
         commandNode.posArgNodes.add(
-            HSPosArgNode(cursor.current.lexeme)..tokens.add(cursor.current));
+            HSPosArgNode(cursor.current.literal as String)
+              ..tokens.add(cursor.current));
         cursor.advance();
         if (cursor.current.tokenType == const TokenType.space()) {
-          cursor.advance();
+          cursor.skip(result);
         }
       }
       while (!cursor.reachedEOF) {
         while (cursor.current.tokenType == const TokenType.identifier()) {
           commandNode.namedArgNodes.add(parseNamedArg());
-          cursor.advance();
           if (cursor.current.tokenType == const TokenType.space()) {
-            cursor.advance();
+            cursor.skip(result);
           }
         }
         while (cursor.current.tokenType == const TokenType.minus()) {
           commandNode.flagNodes.add(parseFlag());
-          cursor.advance();
+          cursor.skip(result);
           if (cursor.current.tokenType == const TokenType.space()) {
-            cursor.advance();
+            cursor.skip(result);
           }
         }
+        while (cursor.current.lexeme.isWhitespace) {
+          cursor.skip(result);
+        }
+        break;
       }
-
-      ast.nodes.add(
-        commandNode..tokens.addAll(rootNode.tokens),
-      );
     }
+/*     print("AST (${result.ast.terminalNodes.length})");
+    print([for (final tn in result.ast.terminalNodes) tn.toPrettyString()]
+        .join('\n'));
+    print("===================");
+    print(result.ast.reconstructSource());
+    print("==================="); */
 
-    return ast;
+    return result;
   }
 
-  HSCommandRootNode parseCommand() {
-    if (cursor.current.tokenType == const TokenType.identifier()) {
-      return parseRoot();
-    } else {
+  HSCommandRootNode parseRoot() {
+    if (cursor.current.tokenType != const TokenType.identifier()) {
       throw HSParseException(
           current: cursor.current,
           message:
               "Identifier for root node expected, '${cursor.current.tokenType.value}' given instead.");
     }
-  }
-
-  HSCommandRootNode parseRoot() {
     final node = HSCommandRootNode();
     final List<Token> currentChunk = [];
     while (cursor.current.tokenType != const TokenType.space() &&
@@ -84,6 +90,7 @@ class HSParser extends Parser {
             current: cursor.current,
           );
       }
+
       node.tokens.add(cursor.current);
       cursor.advance();
     }
@@ -98,14 +105,15 @@ class HSParser extends Parser {
         current: cursor.current,
       );
     }
+
     return node;
   }
 
   HSNamedArgNode parseNamedArg() {
     final List<Token> nodeTokens = [];
     final List<String> name = [];
-    while (cursor.current.tokenType == const TokenType.identifier() &&
-        !cursor.reachedEOF) {
+    while (!cursor.reachedEOF &&
+        cursor.current.tokenType == const TokenType.identifier()) {
       name.add(cursor.current.lexeme);
       nodeTokens.add(cursor.current);
       cursor.advance();
@@ -121,6 +129,7 @@ class HSParser extends Parser {
     } else {
       // Start of arg val
       if (cursor.current.tokenType == const TokenType.colon()) {
+        nodeTokens.add(cursor.current);
         cursor.advance();
         final List<String> argVal = [];
         while (cursor.current.tokenType != const TokenType.semicolon() &&
@@ -138,8 +147,10 @@ class HSParser extends Parser {
             current: cursor.current,
           );
         } else {
+          nodeTokens.add(cursor.current);
           cursor.advance();
-          return HSNamedArgNode(argName: name.join(), argValue: argVal.join());
+          return HSNamedArgNode(argName: name.join(), argValue: argVal.join())
+            ..tokens.addAll(nodeTokens);
         }
       } else {
         // Some illegal character instead of ':'
@@ -176,7 +187,8 @@ class HSParser extends Parser {
     if (cursor.current.tokenType == const TokenType.space() ||
         cursor.reachedEOF) {
       return HSFlagNode(
-          flagName: flagName.join(), globalFlag: minusCounter == 2);
+          flagName: flagName.join(), globalFlag: minusCounter == 2)
+        ..tokens.addAll(nodeTokens);
     } else {
       throw HSParseException(
           message:
@@ -186,15 +198,42 @@ class HSParser extends Parser {
   }
 }
 
-class HSCommandNode extends ASTNode {
-  final HSCommandRootNode root;
+class HSCommandNode extends NonTerminalASTNode {
+  late final HSCommandRootNode root;
   final List<HSPosArgNode> posArgNodes = [];
   final List<HSNamedArgNode> namedArgNodes = [];
   final List<HSFlagNode> flagNodes = [];
   final List<HSCommentNode> commentNodes = [];
-  HSCommandNode({
-    required this.root,
-  }) : super('HSCommandNode', scopes: ['hs.cmd']);
+  HSCommandNode() : super('HSCommandNode');
+
+  @override
+  CursorLocation get start => root.start;
+  @override
+  CursorLocation get end {
+    final List<TerminalASTNode> tnodes = [];
+    if (posArgNodes.isNotEmpty) tnodes.add(posArgNodes.last);
+    if (namedArgNodes.isNotEmpty) tnodes.add(namedArgNodes.last);
+    if (flagNodes.isNotEmpty) tnodes.add(flagNodes.last);
+    if (commentNodes.isNotEmpty) tnodes.add(commentNodes.last);
+    TerminalASTNode prev = tnodes[0];
+    CursorLocation maxEnd = prev.end;
+    for (final TerminalASTNode tnode in tnodes) {
+      if (tnode.end > prev.end) {
+        maxEnd = tnode.end;
+      }
+      prev = tnode;
+    }
+    return maxEnd;
+  }
+
+  @override
+  List<TerminalASTNode> findAllTerminals() => [
+        root,
+        ...posArgNodes,
+        ...namedArgNodes,
+        ...flagNodes,
+        ...commentNodes,
+      ];
 
   @override
   String toPrettyString([int indent = 1]) => [
@@ -208,21 +247,21 @@ class HSCommandNode extends ASTNode {
       ].join('\n');
 }
 
-class HSCommandRootNode extends ASTNode {
+class HSCommandRootNode extends TerminalASTNode {
   final List<String> commandChunks = [];
   HSCommandRootNode() : super('HSCommandRootNode', scopes: ['hs.root']);
 }
 
-class HSCommentNode extends ASTNode {
+class HSCommentNode extends TerminalASTNode {
   HSCommentNode() : super('HSCommentNode', scopes: ['hs.comment']);
 }
 
-class HSPosArgNode extends ASTNode {
+class HSPosArgNode extends TerminalASTNode {
   final String value;
   HSPosArgNode(this.value) : super('HSPosArgNode', scopes: ['hs.posarg']);
 }
 
-class HSNamedArgNode extends ASTNode {
+class HSNamedArgNode extends TerminalASTNode {
   final String argName;
   final String argValue;
   HSNamedArgNode({
@@ -231,7 +270,7 @@ class HSNamedArgNode extends ASTNode {
   }) : super('HSNamedArgNode', scopes: ['hs.namedarg']);
 }
 
-class HSFlagNode extends ASTNode {
+class HSFlagNode extends TerminalASTNode {
   final String flagName;
   final bool globalFlag;
   HSFlagNode({
@@ -248,4 +287,7 @@ class HSParseException implements Exception {
     required this.message,
     required this.current,
   });
+
+  @override
+  String toString() => "$message\n${current.toPrettyString().padLeft(4, ' ')}";
 }

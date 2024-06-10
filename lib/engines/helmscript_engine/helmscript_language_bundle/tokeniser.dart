@@ -20,11 +20,14 @@ class HSTokeniser extends Tokeniser {
 
     tokenisingLoop();
     offset = null;
+/*     print("TOKENS");
+    print([for (final tok in tokens) tok.toPrettyString()].join('\n'));
+    print("==================="); */
     return tokens;
   }
 
   void tokenisingLoop() {
-    do {
+    while (!cursor.current.isEOF) {
       tokens.add(
         switch (cursor.current) {
           "." => Token(
@@ -44,21 +47,11 @@ class HSTokeniser extends Tokeniser {
               end: cursor.location() + offset),
           "-" => Token(
               tokenType: const TokenType.minus(),
-              lexeme: const TokenType.semicolon().value,
+              lexeme: const TokenType.minus().value,
               start: cursor.location() + offset,
               end: cursor.location() + offset),
           '"' => tokeniseString(),
           "'" => tokeniseString(),
-/*           '"' => Token(
-              tokenType: const TokenType.doubleQuote(),
-              lexeme: const TokenType.doubleQuote().value,
-              start: cursor.location() + offset,
-              end: cursor.location() + offset),
-          "'" => Token(
-              tokenType: const TokenType.singleQUote(),
-              lexeme: const TokenType.singleQUote().value,
-              start: cursor.location() + offset,
-              end: cursor.location() + offset), */
           ' ' => Token(
               tokenType: const TokenType.space(),
               lexeme: const TokenType.space().value,
@@ -81,7 +74,8 @@ class HSTokeniser extends Tokeniser {
               end: cursor.location() + offset),
         },
       );
-    } while (!cursor.advance().isEOF);
+      cursor.advance();
+    }
 
     tokens.add(Token(
       tokenType: const TokenType.eof(),
@@ -108,11 +102,12 @@ class HSTokeniser extends Tokeniser {
     } else {
       final Token t = Token(
         tokenType: const TokenType.string(),
-        lexeme: contents.join(),
+        lexeme: "$opening${contents.join()}$opening",
         start: start,
         end: cursor.location(),
+        literal: contents.join(),
       );
-      cursor.skip();
+      //cursor.skip();
 
       return t;
     }
@@ -127,4 +122,7 @@ class HSTokenException implements Exception {
     required this.message,
     required this.location,
   });
+
+  @override
+  String toString() => "HSTokenExc $location: $message";
 }
