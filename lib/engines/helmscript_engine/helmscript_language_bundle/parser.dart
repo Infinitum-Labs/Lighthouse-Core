@@ -10,41 +10,50 @@ class HSParser extends Parser {
     cursor = TokenCursor(tokens);
 
     while (!cursor.reachedEOF) {
-      final HSCommandNode commandNode = HSCommandNode();
-      final HSCommandRootNode rootNode = parseRoot();
-      commandNode.root = rootNode;
-      result.ast.nodes.add(commandNode);
-      if (!cursor.reachedEOF && cursor.current.lexeme.isWhitespace) {
-        cursor.skip(result);
-      }
-      while (cursor.current.tokenType == const TokenType.string()) {
-        commandNode.posArgNodes.add(
-            HSPosArgNode(cursor.current.literal as String)
-              ..tokens.add(cursor.current));
-        cursor.advance();
-        if (cursor.current.tokenType == const TokenType.space()) {
+      try {
+        final HSCommandNode commandNode = HSCommandNode();
+        final HSCommandRootNode rootNode = parseRoot();
+        commandNode.root = rootNode;
+        result.ast.nodes.add(commandNode);
+        if (!cursor.reachedEOF && cursor.current.lexeme.isWhitespace) {
           cursor.skip(result);
         }
-      }
-      while (!cursor.reachedEOF) {
-        while (cursor.current.tokenType == const TokenType.identifier()) {
-          commandNode.namedArgNodes.add(parseNamedArg());
+        while (cursor.current.tokenType == const TokenType.string()) {
+          commandNode.posArgNodes.add(
+              HSPosArgNode(cursor.current.literal as String)
+                ..tokens.add(cursor.current));
+          cursor.advance();
           if (cursor.current.tokenType == const TokenType.space()) {
             cursor.skip(result);
           }
         }
-        while (cursor.current.tokenType == const TokenType.minus()) {
-          commandNode.flagNodes.add(parseFlag());
-          cursor.skip(result);
-          if (cursor.current.tokenType == const TokenType.space()) {
+        while (!cursor.reachedEOF) {
+          while (cursor.current.tokenType == const TokenType.identifier()) {
+            commandNode.namedArgNodes.add(parseNamedArg());
+            if (cursor.current.tokenType == const TokenType.space()) {
+              cursor.skip(result);
+            }
+          }
+          while (cursor.current.tokenType == const TokenType.minus()) {
+            commandNode.flagNodes.add(parseFlag());
+            cursor.skip(result);
+            if (cursor.current.tokenType == const TokenType.space()) {
+              cursor.skip(result);
+            }
+          }
+          while (cursor.current.lexeme.isWhitespace) {
             cursor.skip(result);
           }
+          break;
         }
-        while (cursor.current.lexeme.isWhitespace) {
-          cursor.skip(result);
-        }
-        break;
+      } on HSParseException catch (e) {
+        result.reportException(e);
+        continue;
       }
+    }
+
+    for (final exc in result.exceptions) {
+      print(exc.presentExceptionLong());
     }
 /*     print("AST (${result.ast.terminalNodes.length})");
     print([for (final tn in result.ast.terminalNodes) tn.toPrettyString()]
@@ -58,10 +67,13 @@ class HSParser extends Parser {
 
   HSCommandRootNode parseRoot() {
     if (cursor.current.tokenType != const TokenType.identifier()) {
-      throw HSParseException(
-          current: cursor.current,
-          message:
-              "Identifier for root node expected, '${cursor.current.tokenType.value}' given instead.");
+      throw HSParseException.error(
+        token: cursor.current,
+        message:
+            "Identifier for root node expected, '${cursor.current.tokenType.value}' given instead.",
+        description: null,
+        stackTrace: StackTrace.current,
+      );
     }
     final node = HSCommandRootNode();
     final List<Token> currentChunk = [];
@@ -73,10 +85,13 @@ class HSParser extends Parser {
           break;
         case const TokenType.dot():
           if (currentChunk.isEmpty) {
-            throw HSParseException(
-                message:
-                    "Identifier for subcommand after '.': ${cursor.current.lexeme} given instead",
-                current: cursor.current);
+            throw HSParseException.error(
+              message:
+                  "Identifier for subcommand after '.': ${cursor.current.lexeme} given instead",
+              token: cursor.current,
+              description: null,
+              stackTrace: StackTrace.current,
+            );
           } else {
             node.commandChunks.add(currentChunk.map((e) => e.lexeme).join(''));
             currentChunk.clear();
@@ -84,10 +99,12 @@ class HSParser extends Parser {
           }
 
         default:
-          throw HSParseException(
+          throw HSParseException.error(
             message:
                 "Only identifiers and dots are allowed in command root, ${cursor.current.tokenType.value} was given instead.",
-            current: cursor.current,
+            token: cursor.current,
+            description: null,
+            stackTrace: StackTrace.current,
           );
       }
 
@@ -99,10 +116,12 @@ class HSParser extends Parser {
       node.commandChunks.add(currentChunk.map((e) => e.lexeme).join(''));
       currentChunk.clear();
     } else {
-      throw HSParseException(
+      throw HSParseException.error(
         message:
             "Unexpected token ${cursor.current.lexeme}: space or EOF expected",
-        current: cursor.current,
+        token: cursor.current,
+        description: null,
+        stackTrace: StackTrace.current,
       );
     }
 
@@ -121,10 +140,12 @@ class HSParser extends Parser {
     // End of param name
 
     if (cursor.reachedEOF) {
-      throw HSParseException(
+      throw HSParseException.error(
         message:
             "Unexpected end of input: ':' expected to end parameter name and begin argument value",
-        current: cursor.current,
+        token: cursor.current,
+        description: null,
+        stackTrace: StackTrace.current,
       );
     } else {
       // Start of arg val
@@ -141,10 +162,12 @@ class HSParser extends Parser {
 
         if (cursor.reachedEOF) {
           // reached EOF before semicolon
-          throw HSParseException(
+          throw HSParseException.error(
             message:
                 "Unexpected end of input: ';' expected to end argument value",
-            current: cursor.current,
+            token: cursor.current,
+            description: null,
+            stackTrace: StackTrace.current,
           );
         } else {
           nodeTokens.add(cursor.current);
@@ -154,10 +177,13 @@ class HSParser extends Parser {
         }
       } else {
         // Some illegal character instead of ':'
-        throw HSParseException(
-            message:
-                "Illegal character '${cursor.current.lexeme}': only alphanumeric characters allowed as parameter names, and ':' to mark end of parameter name.",
-            current: cursor.current);
+        throw HSParseException.error(
+          message:
+              "Illegal character '${cursor.current.lexeme}': only alphanumeric characters allowed as parameter names, and ':' to mark end of parameter name.",
+          token: cursor.current,
+          description: null,
+          stackTrace: StackTrace.current,
+        );
       }
     }
   }
@@ -172,10 +198,13 @@ class HSParser extends Parser {
       cursor.advance();
     }
     if (minusCounter > 2) {
-      throw HSParseException(
-          message:
-              "Too many '-' preceding the flag, use only 1 for local flag and 2 for global flags: $minusCounter were given",
-          current: cursor.current);
+      throw HSParseException.error(
+        message:
+            "Too many '-' preceding the flag, use only 1 for local flag and 2 for global flags: $minusCounter were given",
+        token: cursor.current,
+        description: null,
+        stackTrace: StackTrace.current,
+      );
     }
 
     while (cursor.current.tokenType == const TokenType.identifier() &&
@@ -190,10 +219,13 @@ class HSParser extends Parser {
           flagName: flagName.join(), globalFlag: minusCounter == 2)
         ..tokens.addAll(nodeTokens);
     } else {
-      throw HSParseException(
-          message:
-              "Illegal character '${cursor.current.lexeme}': only alphanumeric characters allowed as flag names, and space or EOF to mark end of flag name.",
-          current: cursor.current);
+      throw HSParseException.error(
+        message:
+            "Illegal character '${cursor.current.lexeme}': only alphanumeric characters allowed as flag names, and space or EOF to mark end of flag name.",
+        token: cursor.current,
+        description: null,
+        stackTrace: StackTrace.current,
+      );
     }
   }
 }
@@ -279,15 +311,34 @@ class HSFlagNode extends TerminalASTNode {
   }) : super('HSCommanHSFlagNodeRootNode', scopes: ['hs.flag']);
 }
 
-class HSParseException implements Exception {
-  final String message;
-  final Token current;
-
-  const HSParseException({
-    required this.message,
-    required this.current,
+class HSParseException extends ParseException {
+  HSParseException({
+    required super.message,
+    required super.token,
+    required super.description,
+    required super.stackTrace,
+    required super.exceptionType,
   });
 
+  HSParseException.hint({
+    required super.message,
+    required super.token,
+    required super.description,
+    required super.stackTrace,
+  }) : super(exceptionType: ExceptionType.hint);
+  HSParseException.warn({
+    required super.message,
+    required super.token,
+    required super.description,
+    required super.stackTrace,
+  }) : super(exceptionType: ExceptionType.warn);
+  HSParseException.error({
+    required super.message,
+    required super.token,
+    required super.description,
+    required super.stackTrace,
+  }) : super(exceptionType: ExceptionType.error);
+
   @override
-  String toString() => "$message\n${current.toPrettyString().padLeft(4, ' ')}";
+  String toString() => "$message\n${token.toPrettyString().padLeft(4, ' ')}";
 }

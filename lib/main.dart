@@ -1,26 +1,36 @@
-import 'package:flutter/material.dart';
-import 'package:lighthouse_core/auth/auth.dart';
-import 'package:lighthouse_core/db/db.dart';
+import 'dart:convert';
+import 'dart:io';
 
-import './dev_temp.dart';
-
-/// Dev purposes only
-final AccessKey superAccessKey = AccessKey.fromString(
-  jwtObject: JWTObjectV1(
-    jwtAlgo: JWTAlgo.hs256,
-    sub: 'sub',
-    iat: DateTime.now(),
-    exp: DateTime.now(),
-    permissions: const {
-      Permission(permId: PermissionId.db_read),
-      Permission(permId: PermissionId.db_write),
-      Permission(permId: PermissionId.db_access_workbenches),
-      Permission(permId: PermissionId.wh_execute),
-    },
-  ),
-);
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final p = await Process.start(
+    'firebase',
+    ["emulators:start", "--import=./data", "--export-on-exit"],
+    mode: ProcessStartMode.detachedWithStdio,
+  )
+    ..stderr.transform(utf8.decoder).listen((event) {
+      print(event);
+    })
+    ..stdout.transform(utf8.decoder).listen((event) {
+      print(event);
+    });
+  print(p.pid);
+  await Future.delayed(const Duration(seconds: 20), () {
+    print('killing');
+    print(p.kill(ProcessSignal.sigterm));
+    /* Future.delayed(const Duration(seconds: 2), () {
+      print(p.kill(ProcessSignal.sigint));
+    }); */
+  });
+  final String pidToKill =
+      (((await Process.run('lsof', ['-i', ':8080'])).stdout as String)
+          .split('\n')
+          .firstWhere((ln) => ln.startsWith('java'))
+          .replaceAll('java', '')
+          .trim()
+          .split(' ')[0]);
+  await Process.run('kill', [pidToKill]);
+  exit(0);
+  /* WidgetsFlutterBinding.ensureInitialized();
   await DB.init();
-  runApp(const App());
+  runApp(const App()); */
 }

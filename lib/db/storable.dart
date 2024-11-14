@@ -21,6 +21,7 @@ abstract class SchemaObject extends Storable {
   final prefix = HiddenProperty<String, String>('prefix', defaultValue: null);
   final objectId = HiddenProperty<String, String>('objectId',
       key: 'objectId', defaultValue: null);
+  DocumentReference? docRef;
 
   SchemaObject({
     required String userKey,
@@ -30,12 +31,26 @@ abstract class SchemaObject extends Storable {
     objectId.set(ObjectID.generate(prefix.get(), userKey));
     properties.addAll([title, prefix, objectId]);
   }
-
+  
   SchemaObject.fromJson(JSON json) {
     title.set(json.get<String>('title'));
     prefix.set(json.get<String>('prefix'));
     objectId.set(json.get<String>('objectId'));
     properties.addAll([title, prefix, objectId]);
+  }
+
+  void linkTo(DocumentReference dr) {
+    docRef = dr;
+    for (final prop in properties) {
+      prop.linkTo(dr);
+    }
+  }
+
+  void unlink() {
+    docRef = null;
+    for (final prop in properties) {
+      prop.unlink();
+    }
   }
 
   @override
@@ -44,19 +59,4 @@ abstract class SchemaObject extends Storable {
   @mustCallSuper
   Map<String, dynamic> toJson() =>
       Map.fromEntries([for (Property p in properties) p.toJson()]);
-}
-
-extension DTStorable on DateTime {
-  static DateTime fromStorable(int minutes) =>
-      DateTime.fromMillisecondsSinceEpoch(minutes * dtConvConst);
-  Object? toStorable() => minutesSinceEpoch;
-}
-
-extension DurationStorable on Duration {
-  static Duration fromStorable(int minutes) => Duration(minutes: minutes);
-  Object? toStorable() => inMinutes;
-}
-
-extension StorableListUtils on List<Storable> {
-  List<Object?> toStorableList() => map((e) => e.toStorable()).toList();
 }

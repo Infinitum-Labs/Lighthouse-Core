@@ -18,6 +18,11 @@ dependencies:
   cloud_firestore: ^4.4.5
   firebase_core: ^2.8.0
   cloud_functions: ^4.3.4
+  affogato_core:
+    path: ../../AffogatoCore
+  affogato_editor:
+    path: ../../AffogatoEditor
+  icalendar_parser: ^2.0.0
 
 
 dev_dependencies:

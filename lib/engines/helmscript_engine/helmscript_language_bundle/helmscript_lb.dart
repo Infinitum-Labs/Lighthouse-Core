@@ -10,6 +10,7 @@ part './interpreter.dart';
 part './syntax_highlighter.dart';
 
 final LanguageBundle helmscriptLB = LanguageBundle(
+  bundleName: 'helmscript',
   tokeniser: HSTokeniser(),
   parser: HSParser(),
   interpreter: HSInterpreter(),

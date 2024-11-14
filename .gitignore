@@ -53,6 +53,7 @@ lib/firebase/exports/firestore_export/
 
 # Development
 .archives
+data/test_data
 
 # Security
 lighthouse_core/assets/security

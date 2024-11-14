@@ -2,13 +2,14 @@ part of lh.core.db;
 
 /// A Schema property of native type [T] and represented type [R] in forms
 abstract class Property<T, R> implements Storable {
+  DocumentReference? docRef;
+
   /// The label shown above the form field
   final String label;
 
   /// The corresponding key in the JSON representation
-  final String _key;
+  final String key;
   final T Function(R) convertToNative;
-  final R Function(T) convertToStorable;
 
   /// The underlying native value being stored
   T? _value;
@@ -24,14 +25,25 @@ abstract class Property<T, R> implements Storable {
   Property(
     this.label, {
     required this.defaultValue,
-    T Function(R)? toNative,
-    R Function(T)? toStorable,
+    T Function(R)? native,
     String? key,
-  })  : convertToNative = toNative ?? ((R r) => r as T),
-        convertToStorable = toStorable ?? ((T t) => t as R),
-        _key = key ?? label.toCamelCase();
+  })  : convertToNative = native ?? ((R r) => r as T),
+        key = key ?? label.toCamelCase();
 
   void set(T value) => _value = value;
+
+  Future<void> setAndUpdate(T value) async {
+    set(value);
+    if (docRef != null) {
+      await docRef!.update({key: toStorable()});
+    }
+  }
+
+  void linkTo(DocumentReference dr) {
+    docRef = dr;
+  }
+
+  void unlink() => docRef = null;
 
   /// This method must be overridden by properties that wrap
   /// over [List]s. Usually, `list.cast<T>()` will suffice as a concrete
@@ -40,10 +52,8 @@ abstract class Property<T, R> implements Storable {
   R convertListToR(List<dynamic> list) => list as R;
 
   void setFromJson(JSON json) {
-    if (json.containsKey(_key)) {
-      final Object? val = json[_key];
-      print(val);
-      print(val.runtimeType);
+    if (json.containsKey(key)) {
+      final Object? val = json[key];
       if (val == null) {
         // Slightly different from the way [get] is implemented, we don't play around
         // and check for default values and whatnot. If it's not nullable, it should not
@@ -52,7 +62,7 @@ abstract class Property<T, R> implements Storable {
           final exc = PropertyException(
             title: PropertyException.nonNullablePropertyGivenNullValue,
             desc:
-                "Property [${toString()}] ([$_key]) parsed a value of [null] from JSON, when it is not an optional property. Try giving a default value.",
+                "Property [${toString()}] ([$key]) parsed a value of [null] from JSON, when it is not an optional property. Try giving a default value.",
             dataSnapshot: LHDataSnapshot<JSON>(json),
           );
           print(exc.toStorable());
@@ -68,7 +78,7 @@ abstract class Property<T, R> implements Storable {
           final exc = PropertyException(
             title: PropertyException.propertyGivenNonCompatibleStorableType,
             desc:
-                "Property [${toString()}] ([$_key]) parsed a value of type [${val.runtimeType}] from JSON, when [$R] was expected.",
+                "Property [${toString()}] ([$key]) parsed a value of type [${val.runtimeType}] from JSON, when [$R] was expected.",
             dataSnapshot: LHDataSnapshot<JSON>(json),
           );
           print(exc.toStorable());
@@ -79,7 +89,7 @@ abstract class Property<T, R> implements Storable {
       final exc = PropertyException(
         title: PropertyException.propertyKeyNotIncludedInJson,
         desc:
-            "Property [${toString()}] could not find key [$_key] when parsing JSON. This is considered an error condition. Instead, include the key and set it to null or a default value.",
+            "Property [${toString()}] could not find key [$key] when parsing JSON. This is considered an error condition. Instead, include the key and set it to null or a default value.",
         dataSnapshot: LHDataSnapshot<JSON>(json),
       );
       print(exc.toStorable());
@@ -94,7 +104,7 @@ abstract class Property<T, R> implements Storable {
   /// throw an exception when this case is reached. The form provider must ensure
   /// that the user provides an input to this property, but if [get] is called before
   /// that, this exception will be thrown.
-  T get() {
+  T get({bool asCheck = false}) {
     if (null is T) return _value as T;
     if (_value != null) {
       return _value!;
@@ -102,15 +112,19 @@ abstract class Property<T, R> implements Storable {
       if (defaultValue != null) {
         return defaultValue!;
       } else {
-        final exc = PropertyException(
-          title:
-              PropertyException.strictylRequiredProperty_accessedBeforeAssigned,
-          desc:
-              "Property [${toString()}] named [$label] is strictly required, but get() was called before a value was provided.",
-          dataSnapshot: LHDataSnapshot<Property<T, R>>(this),
-        );
-        print(exc.toStorable());
-        throw exc;
+        if (asCheck) {
+          throw PropertyException(title: '', desc: '');
+        } else {
+          final exc = PropertyException(
+            title: PropertyException
+                .strictylRequiredProperty_accessedBeforeAssigned,
+            desc:
+                "Property [${toString()}] named [$label] is strictly required, but get() was called before a value was provided.",
+            dataSnapshot: LHDataSnapshot<Property<T, R>>(this),
+          );
+          print(exc.toStorable());
+          throw exc;
+        }
       }
     }
   }
@@ -141,24 +155,17 @@ abstract class Property<T, R> implements Storable {
         throw "Property [${toString()}] named [$label] has not initialised inner value";
       } */
 
-  MapEntry<String, Object?> toJson() => MapEntry(_key, toStorable());
+  MapEntry<String, Object?> toJson() => MapEntry(key, toStorable());
 
   @override
   Object? toStorable() {
-    final T val = get();
-    if (val is Storable) {
-      return val.toStorable();
-    } else if (val is Duration) {
-      return val.toStorable();
-    } else if (val is DateTime) {
-      return val.toStorable();
-    } else {
-      return val;
-    }
+    if (_value == null && defaultValue == null) {}
+    final v = _value ?? defaultValue;
+    return v.isStorable(true);
   }
 
   @override
-  bool operator ==(Object? other) => other is Property && other._key == _key;
+  bool operator ==(Object? other) => other is Property && other.key == key;
 }
 
 class HiddenProperty<T, R> extends Property<T, R> {
@@ -166,8 +173,7 @@ class HiddenProperty<T, R> extends Property<T, R> {
     super.label, {
     required super.defaultValue,
     super.key,
-    super.toNative,
-    super.toStorable,
+    super.native,
   });
 }
 
@@ -176,8 +182,7 @@ abstract class FormProperty<T, R> extends Property<T, R> {
     super.label, {
     required super.defaultValue,
     super.key,
-    super.toNative,
-    super.toStorable,
+    super.native,
   });
 
   Widget createComponent(ComponentProvider provider);
@@ -188,8 +193,7 @@ class TextProperty<T> extends FormProperty<T, String> {
     super.label, {
     required super.defaultValue,
     super.key,
-    super.toNative,
-    super.toStorable,
+    super.native,
   });
 
   @override
@@ -206,19 +210,19 @@ class NumProperty<T, N extends num?> extends FormProperty<T, Object> {
     required super.defaultValue,
     super.key,
     required T Function(N) numConverter,
-  }) : super(toNative: (Object input) {
+  }) : super(native: (Object input) {
           if (input is String) {
-            if (N is int) {
+            if (equalsType<N, int?>()) {
               return numConverter(int.parse(input) as N);
-            } else if (N is double) {
+            } else if (equalsType<N, double?>()) {
               return numConverter(double.parse(input) as N);
             } else {
-              throw "NumProperty toNative exception";
+              throw "NumProperty ($label) toNative exception (${input.runtimeType}) >> (${N.toString()})";
             }
           } else if (input is int || input is double) {
             return numConverter(input as N);
           } else {
-            throw "NumProperty toNative exception";
+            throw "NumProperty ($label) toNative exception (${input.runtimeType}) >> (${N.toString()})";
           }
         });
 
@@ -232,14 +236,12 @@ class NumProperty<T, N extends num?> extends FormProperty<T, Object> {
 
 class MultiSelectProperty<T> extends FormProperty<List<T>, List<String>> {
   final List<T> options;
-
   MultiSelectProperty(
     super.label, {
     required this.options,
     required super.defaultValue,
     super.key,
-    super.toNative,
-    super.toStorable,
+    super.native,
   });
 
   @override
@@ -261,8 +263,7 @@ class SingleSelectProperty<T> extends FormProperty<T, String> {
     required this.options,
     required super.defaultValue,
     super.key,
-    super.toNative,
-    super.toStorable,
+    super.native,
   });
 
   @override
@@ -279,7 +280,7 @@ class DateTimeProperty extends FormProperty<DateTime?, Object?> {
     super.key,
   }) : super(
             defaultValue: null,
-            toNative: (Object? input) {
+            native: (Object? input) {
               if (input == null) return null;
               if (input is String) {
                 return DateTime.parse(input);
@@ -304,8 +305,7 @@ class ExpandableProperty<T> extends FormProperty<T, dynamic> {
     required this.properties,
     required super.defaultValue,
     super.key,
-    super.toNative,
-    super.toStorable,
+    super.native,
   });
 
   @override

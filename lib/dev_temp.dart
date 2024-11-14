@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lighthouse_core/engines/helmscript_engine/core_commands/core_commands.dart';
+import 'package:lighthouse_core/engines/helmscript_engine/helmscript_engine.dart';
 import 'package:lighthouse_core/main.dart';
-import 'package:lighthouse_core/services/services.dart';
-import './engines/wheelhouse_engine/wheelhouse_engine.dart';
-import './engines/wheelhouse_engine/wh_script/wh_script.dart';
-import './engines/wheelhouse_engine/core_commands/core_commands.dart';
+
 import './utils/utils.dart';
 
 class App extends StatefulWidget {
@@ -94,8 +93,8 @@ class CommandEntryWidget extends StatefulWidget {
 class CommandEntryWidgetVC extends State<CommandEntryWidget> {
   final TextEditingController editingController = TextEditingController();
   final FocusNode focusNode = FocusNode();
-  late final WheelhouseService wheelhouseService = WheelhouseService(
-    commandsRegistry: WHCommandsRegistry(registry: {
+  /* late final WheelhouseService wheelhouseService = WheelhouseService(
+    commandsRegistry: HSCommandsRegistry(registry: {
       'user': UserTools(),
       'dev': DevCmd(),
       'obj': ObjectTools(),
@@ -106,7 +105,7 @@ class CommandEntryWidgetVC extends State<CommandEntryWidget> {
       err: logFn,
     ),
     accessKey: superAccessKey,
-  );
+  ); */
 
   logFn(dynamic logData, [bool isCommand = false]) {
     App.logs.add(LogEntry(
@@ -140,13 +139,18 @@ class CommandEntryWidgetVC extends State<CommandEntryWidget> {
             onSubmitted: (String value) async {
               logFn(value.trim(), true);
               try {
-                final WheelhouseResult wheelhouseResult =
+                /* final HelmscriptResult wheelhouseResult =
                     await wheelhouseService.executeCommandFromWHCommand(
-                        WHParser(source: value.trim()).parse());
+                  HSParser().parse(
+                    HSTokeniser().tokenise(
+                      value.trim(),
+                    ),
+                  ),
+                ); */
                 // Doesnt work:
                 // .executeCommandFromString(value.trim());
 
-                logFn(">  [${wheelhouseResult.code}]: ${wheelhouseResult.msg}");
+                //logFn(">  [${wheelhouseResult.code}]: ${wheelhouseResult.msg}");
               } catch (e, st) {
                 logFn(e);
                 print(e);
